@@ -281,10 +281,10 @@ def create_default_admin():
         print('Default admin created: admin / admin123')
 
 
-if __name__ == '__main__':
-    with app.app_context():
-        db.create_all()
-        create_default_admin()
+with app.app_context():
+    db.create_all()
+    create_default_admin()
 
+if __name__ == '__main__':
     print(app.url_map)
     app.run(debug=True, use_reloader=False)
