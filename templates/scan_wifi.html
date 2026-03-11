@@ -13,11 +13,8 @@
   }
 
   .wifi-orb {
-    position: fixed;
-    border-radius: 50%;
-    filter: blur(110px);
-    pointer-events: none;
-    z-index: 0;
+    position: fixed; border-radius: 50%;
+    filter: blur(110px); pointer-events: none; z-index: 0;
     animation: orbDrift 18s ease-in-out infinite alternate;
     transition: opacity 0.45s ease;
   }
@@ -117,6 +114,7 @@
   }
   .sv-sky    { background:linear-gradient(135deg,var(--text) 30%,var(--sky)); -webkit-background-clip:text; background-clip:text; }
   .sv-green  { background:linear-gradient(135deg,var(--text) 30%,var(--green)); -webkit-background-clip:text; background-clip:text; }
+  .sv-amber  { background:linear-gradient(135deg,var(--text) 30%,var(--amber)); -webkit-background-clip:text; background-clip:text; }
 
   .table-card {
     background: var(--surface);
@@ -169,7 +167,7 @@
   }
 
   .table-scroll { overflow-x: auto; }
-  table { width:100%; border-collapse:collapse; min-width: 1250px; }
+  table { width:100%; border-collapse:collapse; min-width: 1100px; }
 
   thead tr {
     background:var(--thead-bg, rgba(255,255,255,0.03));
@@ -363,14 +361,13 @@
             <th>#</th>
             <th>IP Address</th>
             <th>MAC Address</th>
-            <th>Vendor</th>
+           
             <th>Hostname</th>
             <th>Device Type</th>
             <th>Possible Model</th>
-            <th>Actions</th>
+            <th>System Device</th>
           </tr>
         </thead>
-
         <tbody id="deviceTbody">
           {% for device in devices %}
           <tr class="device-row"
@@ -387,12 +384,12 @@
             <td>
               <div class="mac-chip">
                 <span class="mac-icon"><i class="fi fi-sr-link"></i></span>
-                <code class="mac-code">{{ device.mac or 'N/A' }}</code>
+                <code class="mac-code">{{ device.mac }}</code>
               </div>
             </td>
 
             <td>
-              {% set v = (device.vendor or 'Unknown') | lower %}
+              {% set v = device.vendor | lower %}
               {% if 'apple' in v %}
                 <span class="vendor-badge vendor-apple"><span class="vendor-dot"></span>{{ device.vendor }}</span>
               {% elif 'samsung' in v %}
@@ -403,7 +400,7 @@
                 <span class="vendor-badge vendor-cisco"><span class="vendor-dot"></span>{{ device.vendor }}</span>
               {% elif 'tp-link' in v or 'tp link' in v %}
                 <span class="vendor-badge vendor-tp"><span class="vendor-dot"></span>{{ device.vendor }}</span>
-              {% elif not device.vendor or device.vendor == 'Unknown' %}
+              {% elif device.vendor == '' or device.vendor == 'Unknown' %}
                 <span class="vendor-badge vendor-unknown"><span class="vendor-dot"></span>Unknown</span>
               {% else %}
                 <span class="vendor-badge"><span class="vendor-dot"></span>{{ device.vendor }}</span>
@@ -411,15 +408,15 @@
             </td>
 
             <td>
-              {% if device.hostname and device.hostname != 'Unknown' and device.hostname != 'N/A' %}
+              {% if device.hostname and device.hostname != 'Unknown' %}
                 <span class="host-badge"><span class="host-dot"></span>{{ device.hostname }}</span>
               {% else %}
-                <span class="host-badge" style="opacity:.65;"><span class="host-dot"></span>N/A</span>
+                <span class="host-badge" style="opacity:.65;"><span class="host-dot"></span>Unknown</span>
               {% endif %}
             </td>
 
             <td>
-              {% set t = (device.device_type or 'Unknown') | lower %}
+              {% set t = device.device_type | lower %}
               {% if 'iphone' in t or 'ipad' in t or 'android' in t %}
                 <span class="type-badge type-phone"><span class="type-dot"></span>{{ device.device_type }}</span>
               {% elif 'router' in t or 'switch' in t or 'ap' in t %}
@@ -427,21 +424,21 @@
               {% elif 'pc' in t or 'laptop' in t or 'mac' in t %}
                 <span class="type-badge type-pc"><span class="type-dot"></span>{{ device.device_type }}</span>
               {% else %}
-                <span class="type-badge type-unknown"><span class="type-dot"></span>{{ device.device_type or 'Unknown' }}</span>
+                <span class="type-badge type-unknown"><span class="type-dot"></span>{{ device.device_type }}</span>
               {% endif %}
             </td>
 
             <td>
-              {% if device.possible_model and device.possible_model != 'Unknown' and device.possible_model != 'N/A' %}
+              {% if device.possible_model and device.possible_model != 'Unknown' %}
                 <span class="model-badge"><span class="model-dot"></span>{{ device.possible_model }}</span>
               {% else %}
-                <span class="model-badge" style="opacity:.65;"><span class="model-dot"></span>N/A</span>
+                <span class="model-badge" style="opacity:.65;"><span class="model-dot"></span>Unknown</span>
               {% endif %}
             </td>
 
             <td>
               <button class="copy-btn" title="Copy row"
-                data-copy="{{ device.ip }} | {{ device.mac or 'N/A' }} | {{ device.vendor or 'Unknown' }} | {{ device.hostname or 'N/A' }} | {{ device.device_type or 'Unknown' }} | {{ device.possible_model or 'N/A' }}"
+                data-copy="{{ device.ip }} | {{ device.mac }} | {{ device.vendor }} | {{ device.hostname }} | {{ device.device_type }} | {{ device.possible_model }}"
                 onclick="copyEntry(this)">
                 <i class="fi fi-sr-copy"></i>
               </button>
@@ -455,7 +452,7 @@
       <div class="empty-state">
         <div class="empty-icon"><i class="fi fi-sr-wifi"></i></div>
         <p>No devices found on the network</p>
-        <small>Devices will appear here once your local agent sends data</small>
+        <small>Devices will appear here once they connect to WiFi</small>
       </div>
       {% endif %}
     </div>
@@ -467,7 +464,18 @@
     setTimeout(() => row.classList.add('visible'), 100 + i * 50);
   });
 
-  ['statTotal', 'statActive'].forEach(id => {
+  (function countVendors() {
+    const vendors = new Set();
+    document.querySelectorAll('.device-row').forEach(row => {
+      const searchText = row.dataset.search || '';
+      const parts = searchText.split(' ');
+      const vendor = parts.slice(2, 5).join(' ').trim();
+      if (vendor && vendor.toLowerCase() !== 'unknown') vendors.add(vendor.toLowerCase());
+    });
+    document.getElementById('statVendors').textContent = vendors.size || 0;
+  })();
+
+  ['statTotal', 'statActive', 'statVendors'].forEach(id => {
     const el = document.getElementById(id);
     if (!el) return;
     const target = parseInt(el.textContent, 10) || 0;
@@ -511,8 +519,8 @@
   document.querySelectorAll('.stat-card').forEach(card => {
     card.addEventListener('mousemove', e => {
       const r = card.getBoundingClientRect();
-      const x = (e.clientX - r.left) / r.width - 0.5;
-      const y = (e.clientY - r.top) / r.height - 0.5;
+      const x = (e.clientX - r.left) / r.width  - 0.5;
+      const y = (e.clientY - r.top)  / r.height - 0.5;
       card.style.transform = `translateY(-4px) scale(1.01) rotateX(${-y * 7}deg) rotateY(${x * 7}deg)`;
     });
     card.addEventListener('mouseenter', () => {

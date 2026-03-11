@@ -1,12 +1,12 @@
 import time
-import requests
+# import requests
 from scapy.all import ARP, Ether, srp
 
 API_URL = "https://clouddom-network-management.onrender.com/api/devices/update"
 API_TOKEN = "my-agent-secret"
 
 NETWORK = "192.168.1.0/24"
-SCAN_INTERVAL = 60
+SCAN_INTERVAL = 3
 
 
 def scan_network(network):
@@ -52,7 +52,7 @@ def send_to_cloud(devices):
             API_URL,
             json={"devices": devices},
             headers=headers,
-            timeout=30
+            timeout=10
         )
 
         print("Server response:", response.status_code)
@@ -79,7 +79,7 @@ def main():
 
             print("Devices found:", len(devices))
 
-            send_to_cloud(devices[:2])
+            send_to_cloud(devices)
 
         except Exception as e:
 
