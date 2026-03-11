@@ -5,17 +5,37 @@ from config import Config
 from ping3 import ping
 from datetime import datetime
 from monitor import get_system_metrics
-import os
-from network_scanner import scan_network
+import socket
+import ipaddress
+
 app = Flask(__name__)
 app.config.from_object(Config)
-
-API_TOKEN = os.environ.get("API_TOKEN", "my-agent-secret")
 
 db = SQLAlchemy(app)
 login_manager = LoginManager(app)
 login_manager.login_view = 'login'
 login_manager.login_message = 'Please login first.'
+
+
+# =========================
+# Helper Functions
+# =========================
+def get_local_ip():
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    try:
+        s.connect(("8.8.8.8", 80))
+        ip = s.getsockname()[0]
+    except Exception:
+        ip = "127.0.0.1"
+    finally:
+        s.close()
+    return ip
+
+
+def get_local_subnet():
+    local_ip = get_local_ip()
+    network = ipaddress.ip_network(f"{local_ip}/24", strict=False)
+    return str(network)
 
 
 # =========================
@@ -40,20 +60,6 @@ class Device(db.Model):
     status = db.Column(db.String(20), default='Unknown')
     last_checked = db.Column(db.DateTime, nullable=True)
     response_time = db.Column(db.Float, nullable=True)
-
-
-class ScannedDevice(db.Model):
-    __tablename__ = 'scanned_devices'
-
-    id = db.Column(db.Integer, primary_key=True)
-    ip = db.Column(db.String(50), nullable=False, unique=True)
-    mac = db.Column(db.String(50), nullable=True)
-    vendor = db.Column(db.String(255), nullable=True, default='Unknown')
-    hostname = db.Column(db.String(255), nullable=True, default='N/A')
-    device_type = db.Column(db.String(100), nullable=True, default='Unknown')
-    possible_model = db.Column(db.String(255), nullable=True, default='N/A')
-    status = db.Column(db.String(20), nullable=False, default='Online')
-    last_seen = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
 
 
 # =========================
@@ -224,7 +230,27 @@ def delete_device(device_id):
 @app.route('/scan-wifi')
 @login_required
 def scan_wifi():
-    devices = ScannedDevice.query.order_by(ScannedDevice.last_seen.desc()).all()
+    devices = []
+
+    try:
+        from network_scanner import scan_network
+
+        subnet = get_local_subnet()
+        raw = scan_network(subnet)
+
+        for d in raw:
+            devices.append({
+                'ip': d.get('ip', ''),
+                'mac': d.get('mac', ''),
+                'vendor': d.get('vendor', 'Unknown'),
+                'hostname': d.get('hostname', 'Unknown'),
+                'device_type': d.get('device_type', 'Unknown'),
+                'possible_model': d.get('possible_model', 'Unknown')
+            })
+
+    except Exception as e:
+        flash(f'Could not scan WiFi devices: {str(e)}', 'danger')
+
     return render_template('scan_wifi.html', devices=devices)
 
 
@@ -233,52 +259,6 @@ def scan_wifi():
 def metrics():
     data = get_system_metrics()
     return render_template('metrics.html', data=data)
-
-
-# =========================
-# API ROUTE FOR LOCAL AGENT
-# =========================
-@app.route('/api/devices/update', methods=['POST'])
-def api_devices_update():
-    token = request.headers.get('X-API-KEY')
-
-    if token != API_TOKEN:
-        return {"success": False, "message": "Unauthorized"}, 401
-
-    data = request.get_json(silent=True)
-
-    if not data or 'devices' not in data:
-        return {"success": False, "message": "Invalid payload"}, 400
-
-    devices = data.get('devices', [])
-
-    for item in devices:
-        ip = item.get('ip')
-        if not ip:
-            continue
-
-        scanned = ScannedDevice.query.filter_by(ip=ip).first()
-
-        if not scanned:
-            scanned = ScannedDevice(ip=ip)
-
-        scanned.mac = item.get('mac', '')
-        scanned.vendor = item.get('vendor', 'Unknown')
-        scanned.hostname = item.get('hostname', 'N/A')
-        scanned.device_type = item.get('device_type', 'Unknown')
-        scanned.possible_model = item.get('possible_model', 'N/A')
-        scanned.status = item.get('status', 'Online')
-        scanned.last_seen = datetime.utcnow()
-
-        db.session.add(scanned)
-
-    db.session.commit()
-
-    return {
-        "success": True,
-        "message": "Devices updated successfully",
-        "count": len(devices)
-    }, 200
 
 
 @app.route('/logout')
@@ -304,7 +284,6 @@ def create_default_admin():
 with app.app_context():
     db.create_all()
     create_default_admin()
-
 
 if __name__ == '__main__':
     print(app.url_map)
