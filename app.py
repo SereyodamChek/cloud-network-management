@@ -7,7 +7,6 @@ from datetime import datetime
 from monitor import get_system_metrics
 import os
 from network_scanner import scan_network
-
 app = Flask(__name__)
 app.config.from_object(Config)
 
@@ -225,8 +224,6 @@ def delete_device(device_id):
 @app.route('/scan-wifi')
 @login_required
 def scan_wifi():
-    subnet = get_local_subnet()
-    raw = scan_network(subnet)
     devices = ScannedDevice.query.order_by(ScannedDevice.last_seen.desc()).all()
     return render_template('scan_wifi.html', devices=devices)
 
