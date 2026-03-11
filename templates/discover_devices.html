@@ -1,0 +1,448 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@300;400;600;700;800;900&display=swap" rel="stylesheet">
+
+<style>
+  *, *::before, *::after { box-sizing: border-box; }
+
+  .wifi-page {
+    font-family: 'Nunito', sans-serif;
+    padding: 36px 0 60px;
+    position: relative;
+  }
+
+  /* ── Orbs ── */
+  .wifi-orb {
+    position: fixed; border-radius: 50%;
+    filter: blur(110px); pointer-events: none; z-index: 0;
+    animation: wifiOrbDrift 18s ease-in-out infinite alternate;
+    transition: opacity 0.45s ease;
+  }
+  .wifi-orb-1 { width:500px;height:500px; background:radial-gradient(circle,#0ea5e9,transparent 70%); top:-100px; right:-80px;  opacity:.28; animation-delay:0s; }
+  .wifi-orb-2 { width:380px;height:380px; background:radial-gradient(circle,#6d28d9,transparent 70%); bottom:10%; left:-100px; opacity:.22; animation-delay:7s; }
+  .wifi-orb-3 { width:260px;height:260px; background:radial-gradient(circle,#10b981,transparent 70%); top:40%;   right:5%;    opacity:.18; animation-delay:13s; }
+  [data-theme="light"] .wifi-orb { opacity:.09 !important; }
+  @keyframes wifiOrbDrift {
+    from { transform:translate(0,0) scale(1); }
+    to   { transform:translate(28px,40px) scale(1.08); }
+  }
+
+  /* ── Header ── */
+  .wifi-header {
+    display: flex; align-items: center; justify-content: space-between;
+    flex-wrap: wrap; gap: 16px;
+    margin-bottom: 24px; padding: 22px 28px;
+    background: var(--surface);
+    backdrop-filter: blur(24px) saturate(180%);
+    -webkit-backdrop-filter: blur(24px) saturate(180%);
+    border: 1px solid var(--border); border-radius: 22px;
+    position: relative; z-index: 10;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.06);
+    animation: wifiIn .6s cubic-bezier(.22,1,.36,1) both;
+    transition: background 0.45s ease, border-color 0.45s ease;
+  }
+  @keyframes wifiIn {
+    from { opacity:0; transform:translateY(20px); }
+    to   { opacity:1; transform:translateY(0); }
+  }
+
+  .wifi-title { display:flex; align-items:center; gap:16px; }
+  .wifi-title-icon {
+    width:50px; height:50px; border-radius:14px;
+    background: linear-gradient(135deg,#0ea5e9,#38bdf8);
+    display:flex; align-items:center; justify-content:center;
+    font-size:22px; flex-shrink:0;
+    box-shadow: 0 8px 28px rgba(14,165,233,0.45);
+    animation: wifiIconGlow 3s ease-in-out infinite alternate;
+  }
+  @keyframes wifiIconGlow {
+    from { box-shadow:0 8px 28px rgba(14,165,233,0.45); }
+    to   { box-shadow:0 8px 36px rgba(56,189,248,0.70); }
+  }
+  .wifi-title-text h2 {
+    font-size: 21px; font-weight: 800;
+    background: linear-gradient(135deg, var(--text) 40%, var(--sky));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    margin-bottom: 3px;
+  }
+  .wifi-title-text p { font-size: 12px; color: var(--text-muted); font-weight: 500; }
+
+  .wifi-live-badge {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 8px 18px; border-radius: 50px;
+    background: rgba(14,165,233,0.10); border: 1px solid rgba(14,165,233,0.25);
+    font-size: 12px; font-weight: 700; color: var(--sky);
+    white-space: nowrap; transition: background 0.45s ease, color 0.45s ease;
+  }
+  [data-theme="light"] .wifi-live-badge {
+    background: rgba(2,132,199,0.08); border-color: rgba(2,132,199,0.22);
+  }
+  .wifi-live-dot {
+    width: 7px; height: 7px; border-radius: 50%;
+    background: var(--sky); box-shadow: 0 0 0 0 rgba(56,189,248,0.7);
+    animation: wifiPulse 1.8s ease-out infinite;
+  }
+  @keyframes wifiPulse {
+    0%  { box-shadow:0 0 0 0 rgba(56,189,248,0.7); }
+    70% { box-shadow:0 0 0 8px rgba(56,189,248,0); }
+    100%{ box-shadow:0 0 0 0 rgba(56,189,248,0); }
+  }
+
+  /* ── Stat cards ── */
+  .wifi-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px,1fr));
+    gap: 14px; margin-bottom: 24px;
+    position: relative; z-index: 10;
+    animation: wifiIn .6s cubic-bezier(.22,1,.36,1) .08s both;
+  }
+  .wifi-stat-card {
+    padding: 20px; border-radius: 18px;
+    background: var(--surface);
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    border: 1px solid var(--border);
+    display: flex; align-items: center; gap: 14px;
+    position: relative; overflow: hidden; cursor: default;
+    transition: transform .3s cubic-bezier(.34,1.56,.64,1), border-color .3s ease, background 0.45s ease;
+  }
+  .wifi-stat-card:hover { transform:translateY(-4px) scale(1.01); border-color: var(--border-hov); }
+
+  .stat-glow {
+    position: absolute; inset: 0;
+    background: radial-gradient(circle at 10% 10%, var(--g) 0%, transparent 65%);
+    opacity: 0.15; pointer-events: none; transition: opacity 0.3s;
+  }
+  .wifi-stat-card:hover .stat-glow { opacity: 0.28; }
+  [data-theme="light"] .stat-glow { opacity: 0.07; }
+  [data-theme="light"] .wifi-stat-card:hover .stat-glow { opacity: 0.14; }
+
+  .stat-icon { font-size: 28px; flex-shrink: 0; position: relative; z-index:1; }
+  .stat-info { display:flex; flex-direction:column; gap:2px; position:relative; z-index:1; }
+  .stat-lbl { font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.8px; color:var(--text-muted); }
+  .stat-val {
+    font-size: 34px; font-weight: 900; line-height: 1;
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+  }
+  .sv-sky    { background:linear-gradient(135deg,var(--text) 30%,var(--sky));    -webkit-background-clip:text; background-clip:text; }
+  .sv-green  { background:linear-gradient(135deg,var(--text) 30%,var(--green));  -webkit-background-clip:text; background-clip:text; }
+  .sv-violet { background:linear-gradient(135deg,var(--text) 30%,var(--violet)); -webkit-background-clip:text; background-clip:text; }
+
+  /* ── Table card ── */
+  .wifi-table-card {
+    background: var(--surface);
+    backdrop-filter: blur(24px) saturate(180%);
+    -webkit-backdrop-filter: blur(24px) saturate(180%);
+    border: 1px solid var(--border); border-radius: 22px; overflow: hidden;
+    position: relative; z-index: 10;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.06);
+    animation: wifiIn .6s cubic-bezier(.22,1,.36,1) .16s both;
+    transition: background 0.45s ease, border-color 0.45s ease;
+  }
+
+  .table-toolbar {
+    display: flex; align-items: center; justify-content: space-between;
+    flex-wrap: wrap; gap: 12px;
+    padding: 16px 20px; border-bottom: 1px solid var(--border);
+    transition: border-color 0.45s ease;
+  }
+  .section-label {
+    display: flex; align-items: center; gap: 9px;
+    font-size: 12px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 1.3px; color: var(--text-muted);
+  }
+  .section-dot {
+    width: 7px; height: 7px; border-radius: 50%;
+    background: var(--sky); box-shadow: 0 0 8px var(--sky); flex-shrink: 0;
+  }
+
+  .search-wrap { position: relative; }
+  .search-icon {
+    position: absolute; left: 13px; top: 50%; transform: translateY(-50%);
+    font-size: 14px; pointer-events: none; color: var(--text-muted);
+  }
+  .wifi-search {
+    padding: 9px 13px 9px 38px;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 11px; color: var(--text);
+    font-size: 12px; font-family: 'Nunito', sans-serif; font-weight: 600;
+    outline: none; width: 220px;
+    transition: border-color .3s, background .3s, box-shadow .3s, color 0.45s;
+  }
+  .wifi-search::placeholder { color: var(--text-muted); opacity: .7; }
+  .wifi-search:focus {
+    border-color: rgba(56,189,248,0.5);
+    background: rgba(56,189,248,0.06);
+    box-shadow: 0 0 0 3px rgba(56,189,248,0.12);
+  }
+
+  .table-scroll { overflow-x: auto; }
+  table { width:100%; border-collapse:collapse; }
+  thead tr {
+    background: var(--thead-bg, rgba(255,255,255,0.03));
+    transition: background 0.45s ease;
+  }
+  th {
+    padding: 12px 20px; font-size: 10px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 1.3px;
+    color: var(--text-muted); white-space: nowrap; text-align: left;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .wifi-row {
+    opacity: 0; transform: translateX(-10px);
+    transition: opacity .4s ease, transform .4s cubic-bezier(.22,1,.36,1);
+  }
+  .wifi-row.visible { opacity:1; transform:translateX(0); }
+
+  .wifi-row td {
+    padding: 14px 20px; font-size: 13px; font-weight: 600;
+    color: var(--text);
+    border-bottom: 1px solid var(--row-border, rgba(255,255,255,0.04));
+    transition: background .2s ease, color 0.45s ease;
+    vertical-align: middle;
+  }
+  .wifi-row:last-child td { border-bottom: none; }
+  .wifi-row:hover td { background: var(--row-hover, rgba(255,255,255,0.03)); }
+
+  .row-num {
+    font-size: 11px; font-weight: 700; color: var(--text-muted);
+    background: var(--id-bg, rgba(255,255,255,0.06));
+    padding: 2px 8px; border-radius: 6px;
+    transition: background 0.45s ease, color 0.45s ease;
+  }
+
+  /* IP chip */
+  .ip-chip { display:inline-flex; align-items:center; gap:8px; }
+  .ip-dot { width:8px; height:8px; border-radius:50%; background:var(--sky); opacity:.7; flex-shrink:0; }
+  .ip-code {
+    font-family: 'SF Mono','Fira Code',monospace;
+    font-size: 13px; font-weight: 600; color: var(--sky);
+    background: rgba(56,189,248,0.10); padding: 4px 10px; border-radius: 7px;
+    border: 1px solid rgba(56,189,248,0.22); letter-spacing: 0.3px;
+    transition: background 0.45s ease, color 0.45s ease;
+  }
+  [data-theme="light"] .ip-code { background:rgba(2,132,199,0.08); border-color:rgba(2,132,199,0.22); }
+
+  /* MAC chip */
+  .mac-chip { display:inline-flex; align-items:center; gap:8px; }
+  .mac-icon { font-size:14px; opacity:.65; flex-shrink:0; }
+  .mac-code {
+    font-family: 'SF Mono','Fira Code',monospace;
+    font-size: 12px; font-weight: 600; color: var(--violet);
+    background: rgba(124,58,237,0.08); padding: 4px 10px; border-radius: 7px;
+    border: 1px solid rgba(124,58,237,0.18); letter-spacing: 0.5px;
+    transition: background 0.45s ease, color 0.45s ease;
+  }
+  [data-theme="light"] .mac-code { background:rgba(109,40,217,0.07); border-color:rgba(109,40,217,0.18); }
+
+  /* OUI vendor badge */
+  .vendor-badge {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 3px 10px; border-radius: 50px;
+    font-size: 11px; font-weight: 700; letter-spacing: 0.4px;
+    background: rgba(251,191,36,0.10); color: var(--amber);
+    border: 1px solid rgba(251,191,36,0.22);
+    transition: background 0.45s ease;
+  }
+  [data-theme="light"] .vendor-badge { background:rgba(217,119,6,0.08); border-color:rgba(217,119,6,0.20); }
+
+  /* Copy button */
+  .copy-btn {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 28px; height: 28px; border-radius: 8px;
+    background: transparent; border: 1px solid var(--border);
+    color: var(--text-muted); font-size: 13px; cursor: pointer;
+    transition: background .2s ease, border-color .2s ease, transform .2s cubic-bezier(.34,1.56,.64,1), color .2s ease;
+    flex-shrink: 0;
+  }
+  .copy-btn:hover { background:var(--surface-hov); border-color:var(--border-hov); color:var(--text); transform:scale(1.12); }
+  .copy-btn.copied { color:var(--green); border-color:rgba(52,211,153,0.4); }
+
+  /* Empty state */
+  .empty-state { text-align:center; padding:64px 20px; color:var(--text-muted); }
+  .empty-icon { font-size:52px; margin-bottom:14px; }
+  .empty-state p { font-size:14px; font-weight:600; }
+  .empty-state small { font-size:12px; color:var(--text-muted); opacity:.6; }
+
+  @media (max-width:640px) {
+    .wifi-header { flex-direction:column; align-items:flex-start; }
+    .wifi-search { width:100%; }
+    .table-toolbar { flex-direction:column; align-items:flex-start; }
+    th, .wifi-row td { padding:11px 14px; }
+  }
+</style>
+
+<div class="wifi-page">
+  <div class="wifi-orb wifi-orb-1"></div>
+  <div class="wifi-orb wifi-orb-2"></div>
+  <div class="wifi-orb wifi-orb-3"></div>
+
+  <!-- ── Header ── -->
+  <div class="wifi-header">
+    <div class="wifi-title">
+      <div class="wifi-title-icon"><i class="fi fi-sr-wifi"></i></div>
+      <div class="wifi-title-text">
+        <h2>WiFi Devices</h2>
+        <p>All devices currently connected to the network</p>
+      </div>
+    </div>
+    <div class="wifi-live-badge">
+      <span class="wifi-live-dot"></span>
+      <span id="deviceCount">{{ devices | length }}</span> Connected
+    </div>
+  </div>
+
+  <!-- ── Stats ── -->
+  <div class="wifi-stats">
+    <div class="wifi-stat-card">
+      <div class="stat-glow" style="--g:#38bdf8"></div>
+      <div class="stat-icon"><i class="fi fi-sr-router"></i></div>
+      <div class="stat-info">
+        <span class="stat-lbl">Total Devices</span>
+        <span class="stat-val sv-sky" id="statTotal">{{ devices | length }}</span>
+      </div>
+    </div>
+    <div class="wifi-stat-card">
+      <div class="stat-glow" style="--g:#34d399"></div>
+      <div class="stat-icon"><i class="fi fi-sr-circle-check"></i></div>
+      <div class="stat-info">
+        <span class="stat-lbl">Active Now</span>
+        <span class="stat-val sv-green" id="statActive">{{ devices | length }}</span>
+      </div>
+    </div>
+    <div class="wifi-stat-card">
+      <div class="stat-glow" style="--g:#a78bfa"></div>
+      <div class="stat-icon"><i class="fi fi-sr-lock"></i></div>
+      <div class="stat-info">
+        <span class="stat-lbl">Unique MACs</span>
+        <span class="stat-val sv-violet" id="statMacs">{{ devices | length }}</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Table ── -->
+  <div class="wifi-table-card">
+    <div class="table-toolbar">
+      <div class="section-label">
+        <span class="section-dot"></span>
+        Device List
+      </div>
+      <div class="search-wrap">
+        <span class="search-icon"><i class="fi fi-sr-search"></i></span>
+        <input type="text" class="wifi-search" id="wifiSearch" placeholder="Search IP or MAC…">
+      </div>
+    </div>
+
+    <div class="table-scroll">
+      <table id="wifiTable">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>IP Address</th>
+            <th>MAC Address</th>
+            <th>OUI Prefix</th>
+            <th>Copy</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for device in devices %}
+          <tr class="wifi-row" data-search="{{ device.ip }} {{ device.mac }}">
+            <td><span class="row-num">{{ loop.index }}</span></td>
+            <td>
+              <div class="ip-chip">
+                <span class="ip-dot"></span>
+                <code class="ip-code">{{ device.ip }}</code>
+              </div>
+            </td>
+            <td>
+              <div class="mac-chip">
+                <span class="mac-icon"><i class="fi fi-sr-link"></i></span>
+                <code class="mac-code">{{ device.mac }}</code>
+              </div>
+            </td>
+            <td>
+              <span class="vendor-badge"><i class="fi fi-sr-bolt"></i> {{ device.mac[:8] | upper }}</span>
+            </td>
+            <td>
+              <button class="copy-btn" title="Copy IP & MAC"
+                data-copy="{{ device.ip }} — {{ device.mac }}"
+                onclick="copyEntry(this)"><i class="fi fi-sr-copy"></i></button>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+
+      {% if not devices %}
+      <div class="empty-state">
+        <div class="empty-icon"><i class="fi fi-sr-router"></i></div>
+        <p>No devices found on the network</p>
+        <small>Devices will appear here when they connect to WiFi</small>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<script>
+  /* Row stagger */
+  document.querySelectorAll('.wifi-row').forEach((row, i) => {
+    setTimeout(() => row.classList.add('visible'), 100 + i * 50);
+  });
+
+  /* Animated counters */
+  ['statTotal','statActive','statMacs'].forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    const target = parseInt(el.textContent, 10) || 0;
+    el.textContent = '0';
+    const dur = 900, start = performance.now();
+    const tick = now => {
+      const p = Math.min((now - start) / dur, 1);
+      el.textContent = Math.round((1 - Math.pow(2, -10 * p)) * target);
+      if (p < 1) requestAnimationFrame(tick);
+    };
+    setTimeout(() => requestAnimationFrame(tick), 300);
+  });
+
+  /* Live search */
+  document.getElementById('wifiSearch').addEventListener('input', function() {
+    const q = this.value.toLowerCase();
+    let count = 0;
+    document.querySelectorAll('.wifi-row').forEach(row => {
+      const match = row.dataset.search.toLowerCase().includes(q);
+      row.style.display = match ? '' : 'none';
+      if (match) count++;
+    });
+    document.getElementById('deviceCount').textContent = count;
+  });
+
+  /* Copy to clipboard */
+  function copyEntry(btn) {
+    navigator.clipboard.writeText(btn.dataset.copy).then(() => {
+      btn.innerHTML = '<i class="fi fi-sr-check"></i>';
+      btn.classList.add('copied');
+      setTimeout(() => { btn.innerHTML = '<i class="fi fi-sr-copy"></i>'; btn.classList.remove('copied'); }, 1800);
+    }).catch(() => {
+      btn.innerHTML = '<i class="fi fi-sr-cross"></i>';
+      setTimeout(() => { btn.innerHTML = '<i class="fi fi-sr-copy"></i>'; }, 1500);
+    });
+  }
+
+  /* Stat card tilt */
+  document.querySelectorAll('.wifi-stat-card').forEach(card => {
+    card.addEventListener('mousemove', e => {
+      const r = card.getBoundingClientRect();
+      const x = (e.clientX - r.left) / r.width  - 0.5;
+      const y = (e.clientY - r.top)  / r.height - 0.5;
+      card.style.transform = `translateY(-4px) scale(1.01) rotateX(${-y*7}deg) rotateY(${x*7}deg)`;
+    });
+    card.addEventListener('mouseleave', () => { card.style.transform = ''; });
+    card.addEventListener('mouseenter', () => { card.style.transition = 'transform 0.1s ease, border-color .3s'; });
+    card.addEventListener('mouseleave', () => { card.style.transition = 'transform 0.5s cubic-bezier(.34,1.56,.64,1), border-color .3s'; });
+  });
+</script>
+
+{% endblock %}

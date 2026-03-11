@@ -1,0 +1,1413 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CloudDom - Network Management</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@300;400;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<link rel="stylesheet" href="https://cdn-uicons.flaticon.com/uicons-solid-rounded/css/uicons-solid-rounded.css">
+<link rel="apple-touch-icon" sizes="180x180" href="{{ url_for('static', filename='apple-touch-icon.png') }}">
+<link rel="icon" type="image/png" sizes="32x32" href="{{ url_for('static', filename='favicon-32x32.png') }}">
+<link rel="icon" type="image/png" sizes="16x16" href="{{ url_for('static', filename='favicon-16x16.png') }}">
+<link rel="manifest" href="{{ url_for('static', filename='site.webmanifest') }}">
+<style>
+  /* ══════════════════════════════════════
+       CSS VARIABLES — DARK & LIGHT THEMES
+    ══════════════════════════════════════ */
+    :root,
+    [data-theme="dark"] {
+      --bg:             #0b0f1a;
+      --bg2:            #0f1424;
+      --surface:        rgba(255,255,255,0.055);
+      --surface-hov:    rgba(255,255,255,0.09);
+      --border:         rgba(255,255,255,0.10);
+      --border-hov:     rgba(255,255,255,0.20);
+      --text:           #e8eaf6;
+      --text-sub:       rgba(232,234,246,0.55);
+      --muted:          rgba(232,234,246,0.45);
+      --nav-bg:         rgba(11,15,26,0.78);
+      --nav-border:     rgba(255,255,255,0.07);
+      --scrollbar:      rgba(255,255,255,0.12);
+      --scrollbar-hov:  rgba(255,255,255,0.25);
+      --grid-line:      rgba(167,139,250,0.04);
+      --orb-1:          #6d28d9;
+      --orb-2:          #0ea5e9;
+      --orb-3:          #10b981;
+      --orb-4:          #f43f5e;
+      --orb-opacity-1:  0.28;
+      --orb-opacity-2:  0.22;
+      --orb-opacity-3:  0.18;
+      --orb-opacity-4:  0.14;
+      --violet:   #a78bfa;
+      --sky:      #38bdf8;
+      --green:    #34d399;
+      --red:      #f87171;
+      --font:     'Nunito', sans-serif;
+      --nav-h:    66px;
+      --radius:   14px;
+      --transition: 0.35s cubic-bezier(0.34,1.56,0.64,1);
+    }
+
+    [data-theme="light"] {
+      --bg:             #f0f4ff;
+      --bg2:            #e8eeff;
+      --surface:        rgba(255,255,255,0.75);
+      --surface-hov:    rgba(255,255,255,0.92);
+      --border:         rgba(100,116,180,0.18);
+      --border-hov:     rgba(100,116,180,0.35);
+      --text:           #1a1f36;
+      --text-sub:       rgba(26,31,54,0.60);
+      --muted:          rgba(26,31,54,0.50);
+      --nav-bg:         rgba(240,244,255,0.88);
+      --nav-border:     rgba(100,116,180,0.14);
+      --scrollbar:      rgba(100,116,180,0.22);
+      --scrollbar-hov:  rgba(100,116,180,0.42);
+      --grid-line:      rgba(124,58,237,0.05);
+      --orb-1:          #7c3aed;
+      --orb-2:          #0ea5e9;
+      --orb-3:          #10b981;
+      --orb-4:          #f43f5e;
+      --orb-opacity-1:  0.12;
+      --orb-opacity-2:  0.10;
+      --orb-opacity-3:  0.08;
+      --orb-opacity-4:  0.07;
+    }
+
+    /* ══════════════════════════════════════
+       RESET & BODY
+    ══════════════════════════════════════ */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font);
+      -webkit-font-smoothing: antialiased;
+      min-height: 100vh;
+      overflow-x: hidden;
+      animation: pageEnter 0.55s cubic-bezier(0.22,1,0.36,1) both;
+      transition: background 0.45s ease, color 0.45s ease;
+    }
+    @keyframes pageEnter {
+      from { opacity:0; transform:translateY(12px); }
+      to   { opacity:1; transform:translateY(0); }
+    }
+
+    /* ══════════════════════════════════════
+       GLOBAL AMBIENT BACKGROUND
+    ══════════════════════════════════════ */
+    body::before {
+      content: '';
+      position: fixed; inset: 0;
+      background-image:
+        linear-gradient(var(--grid-line) 1px, transparent 1px),
+        linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
+      background-size: 52px 52px;
+      animation: gridDrift 28s linear infinite;
+      pointer-events: none; z-index: 0;
+      transition: opacity 0.45s ease;
+    }
+    @keyframes gridDrift {
+      from { background-position: 0 0; }
+      to   { background-position: 52px 52px; }
+    }
+
+    .global-orb {
+      position: fixed; border-radius: 50%;
+      filter: blur(110px);
+      pointer-events: none; z-index: 0;
+      animation: globalOrbDrift 18s ease-in-out infinite alternate;
+      transition: opacity 0.5s ease;
+    }
+    .global-orb-1 { width:500px;height:500px; background:radial-gradient(circle,var(--orb-1),transparent 70%); top:-160px;  left:-130px;  opacity:var(--orb-opacity-1); animation-delay:0s; }
+    .global-orb-2 { width:400px;height:400px; background:radial-gradient(circle,var(--orb-2),transparent 70%); top:30%;     right:-100px; opacity:var(--orb-opacity-2); animation-delay:5s; }
+    .global-orb-3 { width:340px;height:340px; background:radial-gradient(circle,var(--orb-3),transparent 70%); bottom:5%;   left:8%;      opacity:var(--orb-opacity-3); animation-delay:10s;}
+    .global-orb-4 { width:260px;height:260px; background:radial-gradient(circle,var(--orb-4),transparent 70%); bottom:10%;  right:12%;    opacity:var(--orb-opacity-4); animation-delay:14s;}
+    @keyframes globalOrbDrift {
+      from { transform:translate(0,0) scale(1); }
+      to   { transform:translate(28px,40px) scale(1.1); }
+    }
+
+    /* ══════════════════════════════════════
+       BLUR LAYER
+       ─────────────────────────────────────
+       KEY FIX: We NEVER apply filter:blur()
+       to any element that is an ancestor of
+       a position:fixed element — doing so
+       creates a new containing block and
+       clips/repositions the fixed child.
+
+       Instead, a dedicated #blur-layer sits
+       between the page (z≤1000) and the
+       overlay panels (z=9999999). It uses
+       backdrop-filter to blur what's behind
+       it, without affecting the overlays
+       that sit on top of it.
+    ══════════════════════════════════════ */
+    #blur-layer {
+      position: fixed;
+      inset: 0;
+      z-index: 5000;          /* above page content, below overlays */
+      pointer-events: none;
+      background: transparent;
+      backdrop-filter: blur(0px);
+      -webkit-backdrop-filter: blur(0px);
+      opacity: 0;
+      transition: opacity 0.3s ease, backdrop-filter 0.3s ease, -webkit-backdrop-filter 0.3s ease;
+    }
+    body.overlay-open #blur-layer {
+      opacity: 1;
+      backdrop-filter: blur(7px);
+      -webkit-backdrop-filter: blur(7px);
+    }
+    body.overlay-open { overflow: hidden; }
+
+    /* ══════════════════════════════════════
+       NAVBAR
+    ══════════════════════════════════════ */
+    .navbar {
+      position: sticky; top: 0; z-index: 1000;
+      height: var(--nav-h);
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 28px;
+      background: var(--nav-bg);
+      backdrop-filter: blur(28px) saturate(200%);
+      -webkit-backdrop-filter: blur(28px) saturate(200%);
+      border-bottom: 1px solid var(--nav-border);
+      box-shadow: 0 1px 0 rgba(167,139,250,0.06), 0 8px 32px rgba(0,0,0,0.12);
+      animation: navSlideDown 0.7s cubic-bezier(0.22,1,0.36,1) both;
+      transition: background 0.45s ease, border-color 0.45s ease, height 0.3s ease, box-shadow 0.3s ease, transform 0.35s ease;
+    }
+    @keyframes navSlideDown {
+      from { opacity:0; transform:translateY(-100%); }
+      to   { opacity:1; transform:translateY(0); }
+    }
+
+    .nav-brand {
+      display: flex; align-items: center; gap: 10px;
+      text-decoration: none; flex-shrink: 0; margin-right: 24px;
+    }
+    .nav-brand-icon {
+      width:32px; height:32px; border-radius:9px;
+      background: linear-gradient(135deg,#7c3aed,#38bdf8);
+      display:flex; align-items:center; justify-content:center;
+      font-size:15px; box-shadow:0 4px 14px rgba(124,58,237,0.45);
+      animation: brandGlow 4s ease-in-out infinite alternate; flex-shrink:0;
+    }
+    @keyframes brandGlow {
+      from { box-shadow:0 4px 14px rgba(124,58,237,0.45); }
+      to   { box-shadow:0 4px 20px rgba(56,189,248,0.6); }
+    }
+    .nav-brand-text {
+      font-size:25px; font-weight:800;
+      background: linear-gradient(135deg,#fff 30%,#a78bfa);
+      -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;
+      white-space:nowrap;
+    }
+    [data-theme="light"] .nav-brand-text {
+      background: linear-gradient(135deg,#1a1f36 30%,#7c3aed);
+      -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;
+    }
+
+    .nav-left { display:flex; align-items:center; gap:4px; flex:1; }
+
+    .nav-link {
+      position:relative; display:inline-flex; align-items:center; gap:6px;
+      padding:7px 14px; border-radius:10px;
+      color:var(--muted); text-decoration:none;
+      font-size:13px; font-weight:700; letter-spacing:0.2px;
+      transition: color 0.25s ease, background 0.25s ease; white-space:nowrap;
+    }
+    .nav-link::after {
+      content:''; position:absolute; bottom:4px; left:50%;
+      transform:translateX(-50%) scaleX(0);
+      width:20px; height:2px; border-radius:2px;
+      background:linear-gradient(90deg,var(--violet),var(--sky));
+      transition:transform 0.3s cubic-bezier(0.34,1.56,0.64,1);
+    }
+    .nav-link:hover { color:var(--text); background:var(--surface-hov); }
+    .nav-link:hover::after { transform:translateX(-50%) scaleX(1); }
+    .nav-link.active { color:var(--text); background:rgba(167,139,250,0.12); border:1px solid rgba(167,139,250,0.2); }
+    .nav-link.active::after { transform:translateX(-50%) scaleX(1); }
+    .nav-link-icon { font-size:14px; line-height:1; transition:color 0.3s ease; }
+    [data-theme="dark"] .nav-link-icon { color:#e8eaf6; }
+    [data-theme="light"] .nav-link-icon { color:#1a1f36; }
+
+    .nav-link:nth-child(1) { animation:navLinkIn .5s cubic-bezier(.22,1,.36,1) .15s both; }
+    .nav-link:nth-child(2) { animation:navLinkIn .5s cubic-bezier(.22,1,.36,1) .21s both; }
+    .nav-link:nth-child(3) { animation:navLinkIn .5s cubic-bezier(.22,1,.36,1) .27s both; }
+    .nav-link:nth-child(4) { animation:navLinkIn .5s cubic-bezier(.22,1,.36,1) .33s both; }
+    @keyframes navLinkIn {
+      from { opacity:0; transform:translateY(-8px); }
+      to   { opacity:1; transform:translateY(0); }
+    }
+
+    .nav-divider { width:1px; height:22px; background:var(--border); margin:0 12px; flex-shrink:0; transition:background 0.45s ease; }
+    .nav-right { display:flex; align-items:center; gap:10px; flex-shrink:0; animation:navLinkIn .5s cubic-bezier(.22,1,.36,1) .38s both; }
+
+    .nav-welcome {
+      display:flex; align-items:center; gap:8px;
+      padding:6px 14px;
+      background:rgba(167,139,250,0.08); border:1px solid rgba(167,139,250,0.18);
+      border-radius:50px; font-size:12px; font-weight:700; color:var(--text-sub);
+      transition:background 0.45s ease, color 0.45s ease;
+    }
+    .nav-avatar {
+      width:22px; height:22px; border-radius:50%;
+      background:linear-gradient(135deg,#7c3aed,#38bdf8);
+      display:flex; align-items:center; justify-content:center;
+      font-size:11px; flex-shrink:0; color:#fff;
+    }
+    .nav-username { color:var(--violet); }
+
+    .nav-logout {
+      display:inline-flex; align-items:center; gap:6px;
+      padding:7px 14px; border-radius:10px;
+      background:rgba(248,113,113,0.10); border:1px solid rgba(248,113,113,0.20);
+      color:var(--red); font-size:12px; font-weight:700; text-decoration:none;
+      transition:background .25s ease, transform .25s cubic-bezier(.34,1.56,.64,1), box-shadow .25s ease;
+    }
+    .nav-logout:hover {
+      background:rgba(248,113,113,0.2);
+      transform:translateY(-2px); box-shadow:0 6px 16px rgba(248,113,113,0.2);
+    }
+
+    /* ══════════════════════════════════════
+       THEME TOGGLE
+    ══════════════════════════════════════ */
+    .theme-toggle {
+      position: relative; display: flex; align-items: center;
+      width: 70px; height: 32px; border-radius: 50px;
+      background: rgba(255,255,255,0.07); border: 1px solid var(--border);
+      cursor: pointer; padding: 3px;
+      transition: background 0.45s ease, border-color 0.45s ease, box-shadow 0.3s ease;
+      flex-shrink: 0; overflow: hidden;
+    }
+    [data-theme="light"] .theme-toggle { background:rgba(124,58,237,0.08); border-color:rgba(124,58,237,0.22); }
+    .theme-toggle:hover { box-shadow:0 0 0 3px rgba(167,139,250,0.18); }
+
+    .toggle-pill {
+      position: absolute; top: 3px; left: 3px;
+      width: 26px; height: 26px; border-radius: 50%;
+      background: linear-gradient(135deg,#7c3aed,#38bdf8);
+      box-shadow: 0 2px 8px rgba(124,58,237,0.45);
+      transition: transform 0.45s cubic-bezier(0.34,1.56,0.64,1), background 0.45s ease, box-shadow 0.45s ease;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 13px; z-index: 2;
+    }
+    [data-theme="light"] .toggle-pill {
+      transform: translateX(38px);
+      background: linear-gradient(135deg,#f59e0b,#fbbf24);
+      box-shadow: 0 2px 12px rgba(245,158,11,0.5);
+    }
+    .toggle-track {
+      display: flex; align-items: center; justify-content: space-between;
+      width: 100%; padding: 0 6px 0 32px;
+      font-size: 12px; font-weight: 800; letter-spacing: 0.3px;
+      z-index: 1; pointer-events: none; user-select: none;
+      transition: padding 0.45s cubic-bezier(0.34,1.56,0.64,1);
+    }
+    [data-theme="light"] .toggle-track { padding: 0 32px 0 6px; }
+    .toggle-dark-label  { color: rgba(167,139,250,0.8); transition: opacity 0.3s ease; }
+    .toggle-light-label { color: rgba(251,191,36,0.8);  transition: opacity 0.3s ease; }
+    [data-theme="dark"]  .toggle-light-label { opacity: 0.35; }
+    [data-theme="light"] .toggle-dark-label  { opacity: 0.35; }
+    .theme-toggle::after {
+      content:''; position:absolute; inset:-4px; border-radius:50px;
+      background:transparent; transition:box-shadow 0.35s ease; pointer-events:none;
+    }
+    .theme-toggle.pop::after { animation: togglePop 0.5s ease forwards; }
+    @keyframes togglePop {
+      0%   { box-shadow:0 0 0 0 rgba(167,139,250,0.5); }
+      50%  { box-shadow:0 0 0 8px rgba(167,139,250,0.15); }
+      100% { box-shadow:0 0 0 0 rgba(167,139,250,0); }
+    }
+
+    /* ══════════════════════════════════════
+       HAMBURGER
+    ══════════════════════════════════════ */
+    .nav-hamburger {
+      display:none; flex-direction:column; gap:5px; cursor:pointer; padding:6px;
+      border-radius:8px; border:1px solid var(--border); background:var(--surface);
+      transition:background .2s ease; flex-shrink:0;
+    }
+    .nav-hamburger:hover { background:var(--surface-hov); }
+    .nav-hamburger span {
+      display:block; width:20px; height:2px; background:var(--muted); border-radius:2px;
+      transition:transform .3s ease, opacity .3s ease, background .3s ease;
+    }
+    .nav-hamburger.open span:nth-child(1) { transform:translateY(7px) rotate(45deg); background:var(--text); }
+    .nav-hamburger.open span:nth-child(2) { opacity:0; transform:scaleX(0); }
+    .nav-hamburger.open span:nth-child(3) { transform:translateY(-7px) rotate(-45deg); background:var(--text); }
+
+    .nav-mobile-menu {
+      display:none; position:fixed; top:var(--nav-h); left:0; right:0;
+      background:var(--nav-bg);
+      backdrop-filter:blur(28px); -webkit-backdrop-filter:blur(28px);
+      border-bottom:1px solid var(--nav-border);
+      padding:16px 20px 20px; z-index:999;
+      flex-direction:column; gap:6px;
+      transform:translateY(-16px); opacity:0;
+      transition:transform .35s cubic-bezier(.22,1,.36,1), opacity .3s ease, background 0.45s ease;
+    }
+    .nav-mobile-menu.open { display:flex; transform:translateY(0); opacity:1; }
+    .nav-mobile-menu .nav-link { padding:11px 16px; font-size:14px; }
+    .nav-mobile-divider { height:1px; background:var(--border); margin:8px 0; }
+
+    .mobile-theme-row {
+      display:flex; align-items:center; justify-content:space-between;
+      padding:10px 16px;
+      background:var(--surface); border:1px solid var(--border);
+      border-radius:12px; margin-top:4px;
+    }
+    .mobile-theme-label { font-size:13px; font-weight:700; color:var(--text-sub); }
+
+    /* ══════════════════════════════════════
+       FLASH MESSAGES
+    ══════════════════════════════════════ */
+    .flash-wrap {
+      position:relative; z-index:20;
+      width:92%; max-width:1200px;
+      margin:20px auto 0;
+      display:flex; flex-direction:column; gap:10px;
+    }
+    .alert {
+      display:flex; align-items:center; gap:12px;
+      padding:13px 18px; border-radius:14px;
+      font-size:13px; font-weight:700;
+      animation:alertPop .45s cubic-bezier(.22,1,.36,1) both;
+      position:relative; overflow:hidden;
+    }
+    @keyframes alertPop {
+      from { opacity:0; transform:translateY(-12px) scale(0.97); }
+      to   { opacity:1; transform:translateY(0) scale(1); }
+    }
+    .alert::before { content:''; position:absolute; left:0; top:0; bottom:0; width:3px; border-radius:3px 0 0 3px; }
+    .alert.success { background:rgba(52,211,153,0.1);  border:1px solid rgba(52,211,153,0.25);  color:#34d399; }
+    .alert.success::before { background:#34d399; }
+    .alert.success .alert-icon::before { content:'✅'; }
+    .alert.danger  { background:rgba(248,113,113,0.1); border:1px solid rgba(248,113,113,0.25); color:#f87171; }
+    .alert.danger::before  { background:#f87171; }
+    .alert.danger  .alert-icon::before { content:'⚠️'; }
+    .alert.warning { background:rgba(251,191,36,0.1);  border:1px solid rgba(251,191,36,0.25);  color:#fbbf24; }
+    .alert.warning::before { background:#fbbf24; }
+    .alert.warning .alert-icon::before { content:'⚡'; }
+    .alert.info    { background:rgba(56,189,248,0.1);  border:1px solid rgba(56,189,248,0.25);  color:#38bdf8; }
+    .alert.info::before    { background:#38bdf8; }
+    .alert.info    .alert-icon::before { content:'ℹ️'; }
+    .alert-icon { font-size:15px; flex-shrink:0; }
+    .alert-close {
+      margin-left:auto; flex-shrink:0; cursor:pointer; opacity:0.5; font-size:16px;
+      transition:opacity .2s ease, transform .2s ease;
+      background:none; border:none; color:inherit; padding:0 2px;
+    }
+    .alert-close:hover { opacity:1; transform:scale(1.2); }
+    .alert-progress { position:absolute; bottom:0; left:0; height:2px; border-radius:2px; animation:alertProgress 4s linear forwards; }
+    .alert.success .alert-progress { background:#34d399; }
+    .alert.danger  .alert-progress { background:#f87171; }
+    .alert.warning .alert-progress { background:#fbbf24; }
+    .alert.info    .alert-progress { background:#38bdf8; }
+    @keyframes alertProgress { from{width:100%} to{width:0%} }
+    .alert.dismissing {
+      transition:opacity .3s ease, transform .3s ease, max-height .35s ease, padding .35s ease;
+      opacity:0; transform:translateX(20px); max-height:0; padding-top:0; padding-bottom:0; overflow:hidden;
+    }
+
+    /* ══════════════════════════════════════
+       MAIN CONTAINER
+    ══════════════════════════════════════ */
+    .container {
+      position:relative; z-index:10;
+      width:92%; max-width:1200px;
+      margin:28px auto 60px;
+    }
+
+    /* ══════════════════════════════════════
+       PAGE TRANSITION OVERLAY
+    ══════════════════════════════════════ */
+    #page-transition {
+      position:fixed; inset:0; background:var(--bg);
+      z-index:9999; pointer-events:none; opacity:0;
+      transition:opacity .25s ease;
+    }
+    #page-transition.active { opacity:1; pointer-events:all; }
+
+    /* ══════════════════════════════════════
+       SCROLLBAR
+    ══════════════════════════════════════ */
+    ::-webkit-scrollbar { width:6px; height:6px; }
+    ::-webkit-scrollbar-track { background:transparent; }
+    ::-webkit-scrollbar-thumb { background:var(--scrollbar); border-radius:3px; }
+    ::-webkit-scrollbar-thumb:hover { background:var(--scrollbar-hov); }
+
+    /* ══════════════════════════════════════
+       OVERLAY PANEL — shared base
+       ─────────────────────────────────────
+       position:fixed + display:grid guarantees
+       the card is always in the exact center
+       of the viewport on every device/scroll
+       position. No filter:blur anywhere on
+       ancestors — that would break this.
+    ══════════════════════════════════════ */
+    /* ===== Overlay Panel ===== */
+.overlay-panel {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100%;
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+
+  background:
+    radial-gradient(circle at top, rgba(124, 58, 237, 0.18), transparent 35%),
+    radial-gradient(circle at bottom, rgba(14, 165, 233, 0.14), transparent 35%),
+    rgba(5, 8, 18, 0.62);
+
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+
+  transition:
+    opacity 0.28s ease,
+    visibility 0.28s ease;
+
+  z-index: 10000;
+}
+
+.overlay-panel.open {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+}
+
+[data-theme="light"] .overlay-panel {
+  background:
+    radial-gradient(circle at top, rgba(124, 58, 237, 0.10), transparent 35%),
+    radial-gradient(circle at bottom, rgba(14, 165, 233, 0.10), transparent 35%),
+    rgba(255, 255, 255, 0.50);
+}
+
+/* ===== Loading Card ===== */
+.loading-card {
+  position: relative;
+  overflow: hidden;
+
+  width: min(92vw, 360px);
+  padding: 32px 28px;
+  border-radius: 28px;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+
+  background: rgba(15, 23, 42, 0.78);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+
+  box-shadow:
+    0 10px 30px rgba(0, 0, 0, 0.30),
+    0 30px 80px rgba(0, 0, 0, 0.28),
+    inset 0 1px 0 rgba(255, 255, 255, 0.04);
+
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+
+  transform: translateY(-18px) scale(0.92);
+  opacity: 0;
+
+  transition:
+    transform 0.38s cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 0.26s ease;
+}
+
+.overlay-panel.open .loading-card {
+  transform: translateY(0) scale(1);
+  opacity: 1;
+}
+
+[data-theme="light"] .loading-card {
+  background: rgba(255, 255, 255, 0.72);
+  border: 1px solid rgba(99, 102, 241, 0.10);
+  box-shadow:
+    0 10px 30px rgba(15, 23, 42, 0.08),
+    0 30px 80px rgba(15, 23, 42, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.6);
+}
+
+/* ===== Glow Ring ===== */
+.loading-card::after {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(
+    135deg,
+    rgba(167, 139, 250, 0.45),
+    rgba(56, 189, 248, 0.28),
+    rgba(255, 255, 255, 0.06)
+  );
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  mask-composite: exclude;
+  pointer-events: none;
+}
+
+/* ===== Shimmer ===== */
+.loading-card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -130%;
+  width: 70%;
+  height: 100%;
+  transform: skewX(-20deg);
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.12),
+    transparent
+  );
+  animation: loadingShimmer 2.3s ease-in-out infinite;
+  pointer-events: none;
+}
+
+@keyframes loadingShimmer {
+  0% {
+    left: -130%;
+  }
+  100% {
+    left: 150%;
+  }
+}
+
+/* ===== Spinner Wrapper ===== */
+.loading-spinner {
+  position: relative;
+  width: 64px;
+  height: 64px;
+  flex-shrink: 0;
+}
+
+/* Outer ring */
+.loading-spinner::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 3px solid rgba(255, 255, 255, 0.08);
+  border-top-color: var(--violet);
+  border-right-color: var(--sky);
+  animation: spin 1s linear infinite;
+}
+
+/* Inner ring */
+.loading-spinner::after {
+  content: "";
+  position: absolute;
+  inset: 10px;
+  border-radius: 50%;
+  border: 3px solid transparent;
+  border-top-color: var(--sky);
+  border-left-color: var(--violet);
+  animation: spinReverse 0.8s linear infinite;
+}
+
+/* Center dot */
+.loading-spinner span {
+  position: absolute;
+  inset: 50%;
+  width: 10px;
+  height: 10px;
+  margin-left: -5px;
+  margin-top: -5px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--violet), var(--sky));
+  box-shadow: 0 0 18px rgba(124, 58, 237, 0.55);
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes spinReverse {
+  to {
+    transform: rotate(-360deg);
+  }
+}
+
+/* ===== Text ===== */
+.loading-text {
+  position: relative;
+  z-index: 1;
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--text);
+  text-align: center;
+  line-height: 1.35;
+  letter-spacing: 0.2px;
+}
+
+.loading-subtext {
+  position: relative;
+  z-index: 1;
+  max-width: 260px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--text-sub);
+  text-align: center;
+  line-height: 1.6;
+}
+
+/* ===== Dots Animation ===== */
+.loading-dots {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 2px;
+}
+
+.loading-dots span {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--violet);
+  opacity: 0.35;
+  animation: dotPulse 1.2s infinite ease-in-out;
+}
+
+.loading-dots span:nth-child(2) {
+  animation-delay: 0.15s;
+}
+
+.loading-dots span:nth-child(3) {
+  animation-delay: 0.3s;
+}
+
+@keyframes dotPulse {
+  0%, 80%, 100% {
+    transform: scale(0.7);
+    opacity: 0.3;
+  }
+  40% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* ===== Small Screen ===== */
+@media (max-width: 480px) {
+  .loading-card {
+    width: min(94vw, 320px);
+    padding: 26px 20px;
+    border-radius: 22px;
+  }
+
+  .loading-spinner {
+    width: 56px;
+    height: 56px;
+  }
+
+  .loading-text {
+    font-size: 15px;
+  }
+
+  .loading-subtext {
+    font-size: 12px;
+  }
+}
+
+    /* ══════════════════════════════════════
+       MODAL CARD (logout)
+    ══════════════════════════════════════ */
+    .modal-card {
+      width: clamp(300px, 84vw, 380px);
+      background: rgba(14, 19, 38, 0.97);
+      border: 1px solid rgba(167,139,250,0.15);
+      border-radius: 22px;
+      padding: 34px 28px 28px;
+      box-shadow:
+        0 0 0 1px rgba(167,139,250,0.06),
+        0 8px 32px rgba(0,0,0,0.4),
+        0 32px 80px rgba(0,0,0,0.35);
+      position:relative; overflow:hidden;
+      /* start small + slightly above → drops into center */
+      transform: scale(0.88) translateY(-22px);
+      opacity: 0;
+      transition: transform 0.38s cubic-bezier(0.22,1,0.36,1),
+                  opacity   0.26s ease;
+    }
+    .overlay-panel.open .modal-card {
+      transform: scale(1) translateY(0);
+      opacity: 1;
+    }
+    [data-theme="light"] .modal-card {
+      background: rgba(255,255,255,0.97);
+      border-color: rgba(100,116,180,0.18);
+      box-shadow:
+        0 0 0 1px rgba(124,58,237,0.05),
+        0 8px 32px rgba(100,116,180,0.15),
+        0 32px 80px rgba(100,116,180,0.12);
+    }
+    .modal-card::before {
+      content:''; position:absolute; inset:0; border-radius:22px;
+      background:rgba(255,255,255,0.02); pointer-events:none;
+    }
+    .modal-card::after {
+      content:''; position:absolute; inset:0; border-radius:22px;
+      background:radial-gradient(circle at top left,rgba(124,58,237,0.18),transparent 60%);
+      pointer-events:none;
+    }
+    .modal-icon-wrap {
+      display:flex; align-items:center; justify-content:center;
+      width:68px; height:68px; margin:0 auto 16px;
+      background:linear-gradient(135deg,#7c3aed,#f43f5e);
+      border-radius:50%; font-size:28px; color:#fff;
+      box-shadow:0 8px 24px rgba(124,58,237,0.35);
+    }
+    .modal-title {
+      text-align:center; font-size:20px; font-weight:900;
+      color:var(--text); margin-bottom:10px; position:relative; z-index:1;
+    }
+    .modal-body {
+      text-align:center; font-size:13px; font-weight:600;
+      color:var(--text-sub); line-height:1.65;
+      position:relative; z-index:1; margin-bottom:22px;
+    }
+    .modal-actions {
+      display:flex; gap:10px; justify-content:center;
+      position:relative; z-index:1;
+    }
+    .modal-btn-cancel {
+      padding:9px 22px; border-radius:10px;
+      background:rgba(255,255,255,0.10); color:var(--text);
+      font-size:13px; font-weight:700; cursor:pointer;
+      border:1px solid rgba(255,255,255,0.08);
+      font-family:var(--font);
+      transition:background .25s ease, transform .25s cubic-bezier(.34,1.56,.64,1);
+    }
+    [data-theme="light"] .modal-btn-cancel {
+      background:rgba(100,116,180,0.10);
+      border-color:rgba(100,116,180,0.15);
+    }
+    .modal-btn-cancel:hover { background:rgba(255,255,255,0.18); transform:translateY(-2px); }
+    .modal-btn-cancel:active { transform:scale(.97); }
+    .modal-btn-delete {
+      padding:9px 22px; border-radius:10px;
+      background:linear-gradient(135deg,#f43f5e,#ef4444);
+      color:#fff; font-size:13px; font-weight:700;
+      cursor:pointer; text-decoration:none;
+      box-shadow:0 6px 24px rgba(244,63,94,0.45);
+      transition:transform .25s cubic-bezier(.34,1.56,.64,1), box-shadow .3s ease;
+    }
+    .modal-btn-delete:hover { transform:translateY(-3px) scale(1.02); box-shadow:0 14px 40px rgba(244,63,94,0.6); }
+    .modal-btn-delete:active { transform:scale(.97); }
+
+    /* ══════════════════════════════════════
+       LIGHT THEME PAGE OVERRIDES
+    ══════════════════════════════════════ */
+    [data-theme="light"] .chart-card,
+    [data-theme="light"] .table-card,
+    [data-theme="light"] .list-header,
+    [data-theme="light"] .detail-hero,
+    [data-theme="light"] .edit-card,
+    [data-theme="light"] .login-scene,
+    [data-theme="light"] .dash-header,
+    [data-theme="light"] .search-input,
+    [data-theme="light"] .count-badge {
+      background: rgba(255,255,255,0.75) !important;
+      border-color: rgba(100,116,180,0.18) !important;
+      color: var(--text) !important;
+    }
+    [data-theme="light"] table th { background:rgba(240,244,255,0.9) !important; color:rgba(26,31,54,0.55) !important; }
+    [data-theme="light"] .device-row td { color:#1a1f36 !important; }
+    [data-theme="light"] .device-row:hover td { background:rgba(124,58,237,0.04) !important; }
+    [data-theme="light"] .ip-code { background:rgba(14,165,233,0.08) !important; color:#0369a1 !important; }
+    [data-theme="light"] .search-input { color:#1a1f36 !important; }
+    [data-theme="light"] .search-input::placeholder { color:rgba(26,31,54,0.35) !important; }
+    [data-theme="light"] .field-item input {
+      background:rgba(255,255,255,0.8) !important;
+      border-color:rgba(100,116,180,0.2) !important;
+      color:#1a1f36 !important;
+    }
+    [data-theme="light"] .id-badge  { background:rgba(100,116,180,0.1) !important; color:rgba(26,31,54,0.5) !important; }
+    [data-theme="light"] .na-text   { color:rgba(26,31,54,0.2) !important; }
+    [data-theme="light"] .stat-value,
+    [data-theme="light"] .device-name-text { color:#1a1f36 !important; }
+
+    /* ══════════════════════════════════════
+       RESPONSIVE
+    ══════════════════════════════════════ */
+    @media (max-width: 768px) {
+      .nav-left, .nav-divider, .nav-right { display:none; }
+      .nav-hamburger { display:flex; }
+      .navbar { padding:0 18px; }
+      .container { width:95%; margin-top:20px; }
+      .loading-card { width:clamp(220px, 80vw, 300px); padding:28px 22px; }
+      .modal-card   { width:clamp(280px, 86vw, 360px); padding:28px 20px 22px; }
+    }
+
+  </style>
+</head>
+<body>
+
+<!-- Ambient orbs -->
+<div class="global-orb global-orb-1"></div>
+<div class="global-orb global-orb-2"></div>
+<div class="global-orb global-orb-3"></div>
+<div class="global-orb global-orb-4"></div>
+
+<!-- Page transition overlay -->
+<div id="page-transition"></div>
+
+<!--
+  BLUR LAYER
+  Sits at z-index:5000 — above page content but below overlay panels.
+  We blur this element (via backdrop-filter) instead of applying
+  filter:blur() to .container / .navbar / etc., because doing so
+  would create a new stacking/containing block that clips or
+  repositions any position:fixed descendants (our overlay panels).
+-->
+<div id="blur-layer"></div>
+
+<!-- ════════════ NAVBAR ════════════ -->
+<nav class="navbar">
+  <a href="{{ url_for('dashboard') }}" class="nav-brand">
+    <span class="nav-brand-text">CloudDom</span>
+  </a>
+
+  <div class="nav-left">
+    <a href="{{ url_for('dashboard') }}"     class="nav-link" data-page="dashboard">
+      <span class="nav-link-icon"><i class="fi fi-sr-home"></i></span> Dashboard
+    </a>
+    <a href="{{ url_for('devices') }}"       class="nav-link" data-page="devices">
+      <span class="nav-link-icon"><i class="fi fi-sr-devices"></i></span> Devices
+    </a>
+    <a href="{{ url_for('add_device') }}"    class="nav-link" data-page="add_device">
+      <span class="nav-link-icon"><i class="fi fi-sr-plus"></i></span> Add Device
+    </a>
+    <a href="{{ url_for('scan_wifi') }}" class="nav-link" data-page="scan_wifi">
+      <span class="nav-link-icon"><i class="fi fi-sr-wifi"></i></span> Scan WiFi
+    </a>
+    <a href="{{ url_for('metrics') }}" class="nav-link" data-page="metrics">
+      <span class="nav-link-icon"><i class="fi fi-sr-pulse"></i></span> Metrics
+    </a>
+
+  </div>
+
+  <div class="nav-divider"></div>
+
+  <div class="nav-right">
+    <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme" title="Switch light / dark">
+      <div class="toggle-pill" id="togglePill">
+        <i id="toggleIcon" class="fi fi-ss-moon"></i>
+      </div>
+      <div class="toggle-track">
+        <span class="toggle-light-label">L</span>
+        <span class="toggle-dark-label">D</span>
+      </div>
+    </button>
+
+    {% if current_user.is_authenticated %}
+      <div class="nav-welcome">
+        <div class="nav-avatar">{{ current_user.username[0] | upper }}</div>
+        <span>Welcome, <span class="nav-username">{{ current_user.username }}</span></span>
+      </div>
+      <a href="#" class="nav-logout" id="logoutBtn">
+        <i class="fi fi-sr-exit"></i> Logout
+      </a>
+    {% endif %}
+  </div>
+
+  <button class="nav-hamburger" id="hamburger" aria-label="Menu">
+    <span></span><span></span><span></span>
+  </button>
+</nav>
+
+<!-- Mobile drawer -->
+<div class="nav-mobile-menu" id="mobileMenu">
+  <a href="{{ url_for('dashboard') }}"     class="nav-link"><span class="nav-link-icon"><i class="fi fi-sr-home"></i></span> Dashboard</a>
+  <a href="{{ url_for('devices') }}"       class="nav-link"><span class="nav-link-icon"><i class="fi fi-sr-devices"></i></span> Devices</a>
+  <a href="{{ url_for('add_device') }}"    class="nav-link"><span class="nav-link-icon"><i class="fi fi-sr-plus"></i></span> Add Device</a>
+  
+  <a href="{{ url_for('scan_wifi') }}"     class="nav-link"><span class="nav-link-icon"><i class="fi fi-sr-wifi"></i></span> Scan WiFi</a>
+  <a href="{{ url_for('metrics') }}"     class="nav-link"><span class="nav-link-icon"><i class="fi fi-sr-pulse"></i></span> Metrics</a>
+
+  {% if current_user.is_authenticated %}
+    <div class="nav-mobile-divider"></div>
+  {% endif %}
+  <div class="mobile-theme-row">
+    <span class="mobile-theme-label" id="mobileThemeLabel">🌙 Change Theme</span>
+    <button class="theme-toggle" id="themeToggleMobile" aria-label="Toggle theme" style="width:60px;height:28px;">
+      <div class="toggle-pill" style="width:22px;height:22px;font-size:11px;">
+        <i class="mobile-toggle-icon fi fi-ss-moon"></i>
+      </div>
+      <div class="toggle-track" style="font-size:10px;">
+        <span class="toggle-dark-label">D</span>
+        <span class="toggle-light-label">L</span>
+      </div>
+    </button>
+  </div>
+  {% if current_user.is_authenticated %}
+    <a href="#" class="nav-logout" id="logoutBtnMobile" style="justify-content:center;">
+      <i class="fi fi-sr-exit"></i> Logout ({{ current_user.username }})
+    </a>
+  {% endif %}
+</div>
+
+<!-- ════════════ FLASH MESSAGES ════════════ -->
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    <div class="flash-wrap">
+      {% for category, message in messages %}
+        <div class="alert {{ category }}" role="alert">
+          <span class="alert-icon"></span>
+          <span>{{ message }}</span>
+          <button class="alert-close" aria-label="Close">✕</button>
+          <div class="alert-progress"></div>
+        </div>
+      {% endfor %}
+    </div>
+  {% endif %}
+{% endwith %}
+
+<!-- ════════════ CONTENT ════════════ -->
+<div class="container">
+  {% block content %}{% endblock %}
+</div>
+
+<!-- ════════════ LOGOUT MODAL ════════════ -->
+<div class="overlay-panel" id="logoutModal">
+  <div class="modal-card">
+    <div class="modal-icon-wrap">
+      <i class="fi fi-sr-exit"></i>
+    </div>
+    <div class="modal-title">Logout Confirmation</div>
+    <div class="modal-body">Are you sure you want to log out?</div>
+    <div class="modal-actions">
+      <button class="modal-btn-cancel" id="cancelLogout">Cancel</button>
+      <a href="{{ url_for('logout') }}" class="modal-btn-delete">Yes, Logout</a>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════ SELECT DEVICES MODAL ════════════ -->
+<div class="overlay-panel" id="selectDevicesModal">
+  <div class="modal-card" style="max-width: 480px;">
+    <div class="modal-icon-wrap">
+      <i class="fi fi-sr-wifi"></i>
+    </div>
+    <div class="modal-title">Check Device Status</div>
+    <div class="modal-body">Select device(s) to check. Leave empty to check all devices.</div>
+    <div style="max-height: 300px; overflow-y: auto; margin: 16px 0; position: relative; z-index: 1;">
+      <div id="devicesList" style="display: flex; flex-direction: column; gap: 8px;">
+        <!-- Devices loaded by JS -->
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="modal-btn-cancel" id="cancelCheckDevices">Cancel</button>
+      <button class="modal-btn-delete" id="confirmCheckDevices" style="background: linear-gradient(135deg,#059669,#34d399); color: #fff; border: none;">
+        <i class="fi fi-sr-wifi"></i> Check Status
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════ DASHBOARD WARNING MODAL ════════════ -->
+<div class="overlay-panel" id="dashboardWarningModal">
+  <div class="modal-card">
+    <div class="modal-icon-wrap" style="background: linear-gradient(135deg,#f59e0b,#fbbf24);">
+      <i class="fi fi-sr-info"></i>
+    </div>
+    <div class="modal-title">Dashboard View Only</div>
+    <div class="modal-body">
+      You cannot check device status from the dashboard.
+      <br><br>
+      Please go to the <strong>Devices</strong> page to select and check specific devices.
+    </div>
+    <div class="modal-actions">
+      <button class="modal-btn-cancel" id="closeDashboardWarning">Close</button>
+      <a href="/devices" class="modal-btn-delete" style="background: linear-gradient(135deg,#3b82f6,#0ea5e9); border: none; text-decoration: none; display: inline-flex; align-items: center; gap: 6px;">
+        <i class="fi fi-sr-devices"></i> Go to Devices
+      </a>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════ LOADING OVERLAY ════════════ -->
+<div class="overlay-panel" id="loadingOverlay">
+  <div class="loading-card">
+    <div class="loading-spinner"><span></span></div>
+    <div class="loading-text" id="loadingText">Checking Device Status</div>
+    <div class="loading-subtext" id="loadingSubtext">Pinging all devices in your network…</div>
+  </div>
+</div>
+
+<script>
+  /* ══════════════════════════════════
+     THEME SYSTEM
+  ══════════════════════════════════ */
+  const html        = document.documentElement;
+  const toggleBtn   = document.getElementById('themeToggle');
+  const toggleBtnM  = document.getElementById('themeToggleMobile');
+  const toggleIcon  = document.getElementById('toggleIcon');
+  const mobileIcon  = document.querySelector('.mobile-toggle-icon');
+  const mobileLabel = document.getElementById('mobileThemeLabel');
+
+  const saved = localStorage.getItem('cnm-theme') || 'dark';
+  applyTheme(saved, false);
+
+  function applyTheme(theme, animate) {
+    html.setAttribute('data-theme', theme);
+    localStorage.setItem('cnm-theme', theme);
+    const isDark = theme === 'dark';
+    if (toggleIcon) toggleIcon.className = isDark ? 'fi fi-ss-moon' : 'fi fi-ss-sun';
+    if (mobileIcon) mobileIcon.className = isDark ? 'fi fi-ss-moon mobile-toggle-icon' : 'fi fi-ss-sun mobile-toggle-icon';
+    if (mobileLabel) mobileLabel.textContent = isDark ? '🌙 Dark Mode' : '☀️ Light Mode';
+    if (animate) {
+      toggleBtn.classList.remove('pop');
+      void toggleBtn.offsetWidth;
+      toggleBtn.classList.add('pop');
+      setTimeout(() => toggleBtn.classList.remove('pop'), 520);
+      const flash = document.createElement('div');
+      Object.assign(flash.style, {
+        position:'fixed', inset:'0', zIndex:'9998',
+        background: isDark ? 'rgba(11,15,26,0.5)' : 'rgba(240,244,255,0.5)',
+        pointerEvents:'none', opacity:'0', transition:'opacity 0.2s ease'
+      });
+      document.body.appendChild(flash);
+      requestAnimationFrame(() => { flash.style.opacity = '1'; });
+      setTimeout(() => { flash.style.opacity = '0'; setTimeout(() => flash.remove(), 220); }, 160);
+    }
+  }
+
+  function toggleTheme() {
+    applyTheme(html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark', true);
+  }
+  toggleBtn.addEventListener('click', toggleTheme);
+  if (toggleBtnM) toggleBtnM.addEventListener('click', toggleTheme);
+
+  /* ══════════════════════════════════
+     ACTIVE NAV LINK
+  ══════════════════════════════════ */
+  (function markActive() {
+    const path = window.location.pathname;
+    document.querySelectorAll('.nav-link[data-page]').forEach(link => {
+      if (link.getAttribute('href') === path) link.classList.add('active');
+    });
+  })();
+
+  /* ══════════════════════════════════
+     HAMBURGER
+  ══════════════════════════════════ */
+  const hamburger  = document.getElementById('hamburger');
+  const mobileMenu = document.getElementById('mobileMenu');
+  hamburger.addEventListener('click', () => {
+    const open = mobileMenu.classList.toggle('open');
+    hamburger.classList.toggle('open', open);
+    mobileMenu.style.display = open ? 'flex' : 'none';
+    if (open) requestAnimationFrame(() => {
+      mobileMenu.style.opacity = '1';
+      mobileMenu.style.transform = 'translateY(0)';
+    });
+  });
+  mobileMenu.querySelectorAll('.nav-link, .nav-logout').forEach(link => {
+    link.addEventListener('click', () => {
+      mobileMenu.classList.remove('open');
+      hamburger.classList.remove('open');
+    });
+  });
+
+  /* ══════════════════════════════════
+     FLASH DISMISS
+  ══════════════════════════════════ */
+  document.querySelectorAll('.alert').forEach(alert => {
+    const close = alert.querySelector('.alert-close');
+    function dismiss() {
+      alert.classList.add('dismissing');
+      setTimeout(() => alert.remove(), 380);
+    }
+    close.addEventListener('click', dismiss);
+    setTimeout(dismiss, 4200);
+  });
+
+  /* ══════════════════════════════════
+     OVERLAY SYSTEM
+     ─────────────────────────────────
+     MUST be defined before the generic
+     page-transition interceptor so that
+     logout + check_devices handlers are
+     registered first and can intercept
+     their clicks before the fallback fires.
+  ══════════════════════════════════ */
+  function openOverlay(id) {
+    document.body.classList.add('overlay-open');
+    document.getElementById(id).classList.add('open');
+  }
+
+  function closeOverlay(id) {
+    document.getElementById(id).classList.remove('open');
+    if (!document.querySelector('.overlay-panel.open')) {
+      document.body.classList.remove('overlay-open');
+    }
+  }
+
+  /* ── Logout modal ── */
+  const logoutBtn       = document.getElementById('logoutBtn');
+  const logoutBtnMobile = document.getElementById('logoutBtnMobile');
+  const cancelLogout    = document.getElementById('cancelLogout');
+  const logoutModal     = document.getElementById('logoutModal');
+
+  if (logoutBtn)       logoutBtn.addEventListener('click',       e => { e.preventDefault(); e.stopPropagation(); openOverlay('logoutModal'); });
+  if (logoutBtnMobile) logoutBtnMobile.addEventListener('click', e => { e.preventDefault(); e.stopPropagation(); openOverlay('logoutModal'); });
+  cancelLogout.addEventListener('click', () => closeOverlay('logoutModal'));
+  logoutModal.addEventListener('click',  e => { if (e.target === logoutModal) closeOverlay('logoutModal'); });
+
+  /* ── Check Status Button ──
+     Page-aware handler - blocks on dashboard, shows modal on devices
+     Register BEFORE the generic a[href] interceptor.
+     stopPropagation prevents the generic handler
+     from also firing on the same click event.        */
+  
+  // Direct click handler for devices page button
+  function clickCheckStatus(event) {
+    event.preventDefault();
+    event.stopPropagation();
+    console.log('clickCheckStatus() called on path:', window.location.pathname);
+    
+    if (window.location.pathname === '/devices') {
+      console.log('On /devices - showing device selection modal');
+      populateDevicesList();
+      openOverlay('selectDevicesModal');
+    } else {
+      console.log('Not on /devices - ignoring');
+    }
+  }
+  
+  // Also handle navbar links
+  document.querySelectorAll('a[href*="check_devices"]').forEach(link => {
+    link.addEventListener('click', function (e) {
+      e.preventDefault();
+      e.stopPropagation();
+      console.log('Check Status link clicked on path:', window.location.pathname);
+      
+      // Check if on dashboard
+      if (window.location.pathname === '/dashboard') {
+        console.log('Opening dashboard warning modal');
+        // Show warning modal for dashboard
+        openOverlay('dashboardWarningModal');
+      } else if (window.location.pathname === '/devices') {
+        // On devices page, but shouldn't reach here from navbar (use button instead)
+        console.log('Opening device selection modal from navbar link');
+        populateDevicesList();
+        openOverlay('selectDevicesModal');
+      } else {
+        console.log('Check Status link clicked on unknown path, redirecting');
+        window.location.href = this.href;
+      }
+    });
+  });
+
+  // Function to populate devices list for selection
+  function populateDevicesList() {
+    console.log('populateDevicesList() called');
+    const devicesList = document.getElementById('devicesList');
+    devicesList.innerHTML = '';
+    
+    // Get all device rows from the table
+    const deviceRows = document.querySelectorAll('tr[data-device-id]');
+    console.log('Found', deviceRows.length, 'device rows');
+    
+    if (deviceRows.length === 0) {
+      devicesList.innerHTML = '<p style="text-align:center; color:#999;">No devices found</p>';
+      return;
+    }
+    
+    deviceRows.forEach((row, idx) => {
+      const deviceId = row.getAttribute('data-device-id');
+      const deviceName = row.querySelector('td:nth-child(2)')?.innerText || 'Device';
+      const deviceIp = row.querySelector('td:nth-child(3)')?.innerText || '';
+      console.log(`Device ${idx}:`, {id: deviceId, name: deviceName, ip: deviceIp});
+      
+      const checkbox = document.createElement('label');
+      checkbox.style.display = 'flex';
+      checkbox.style.alignItems = 'center';
+      checkbox.style.gap = '10px';
+      checkbox.style.padding = '10px';
+      checkbox.style.backgroundColor = 'var(--bg-secondary)';
+      checkbox.style.borderRadius = '8px';
+      checkbox.style.cursor = 'pointer';
+      checkbox.style.transition = 'all 0.3s ease';
+      
+      const input = document.createElement('input');
+      input.type = 'checkbox';
+      input.value = deviceId;
+      input.style.cursor = 'pointer';
+      
+      const text = document.createElement('span');
+      text.innerHTML = `<strong>${deviceName}</strong><br><small style="color:#999;">${deviceIp}</small>`;
+      text.style.flex = '1';
+      
+      checkbox.appendChild(input);
+      checkbox.appendChild(text);
+      
+      checkbox.addEventListener('mouseenter', () => {
+        checkbox.style.backgroundColor = 'var(--bg-tertiary)';
+      });
+      checkbox.addEventListener('mouseleave', () => {
+        checkbox.style.backgroundColor = 'var(--bg-secondary)';
+      });
+      
+      devicesList.appendChild(checkbox);
+    });
+  }
+
+  // Close dashboard warning modal
+  document.getElementById('closeDashboardWarning')?.addEventListener('click', () => {
+    closeOverlay('dashboardWarningModal');
+  });
+  
+  // Close dashboard warning modal when clicking overlay
+  document.getElementById('dashboardWarningModal')?.addEventListener('click', (e) => {
+    if (e.target === document.getElementById('dashboardWarningModal')) {
+      closeOverlay('dashboardWarningModal');
+    }
+  });
+
+  // Cancel device selection
+  document.getElementById('cancelCheckDevices')?.addEventListener('click', () => {
+    closeOverlay('selectDevicesModal');
+  });
+  
+  // Close device selection modal when clicking overlay
+  document.getElementById('selectDevicesModal')?.addEventListener('click', (e) => {
+    if (e.target === document.getElementById('selectDevicesModal')) {
+      closeOverlay('selectDevicesModal');
+    }
+  });
+
+  // Confirm device selection
+  document.getElementById('confirmCheckDevices')?.addEventListener('click', () => {
+    const selectedCheckboxes = document.querySelectorAll('#devicesList input[type="checkbox"]:checked');
+    const selectedDeviceIds = Array.from(selectedCheckboxes).map(cb => cb.value);
+    
+    // Show loading overlay
+    closeOverlay('selectDevicesModal');
+    openOverlay('loadingOverlay');
+    document.getElementById('loadingText').textContent = 'Checking Device Status';
+    document.getElementById('loadingSubtext').textContent = 'Pinging selected devices…';
+    
+    // Build a query string if devices were selected
+    let checkUrl = '/check_devices';
+    if (selectedDeviceIds.length > 0) {
+      checkUrl += '?devices=' + selectedDeviceIds.join(',');
+    }
+    
+    setTimeout(() => {
+      window.location.href = checkUrl;
+    }, 420);
+  });
+
+  /* ── Loading overlay (Scan WiFi) ── */
+  document.querySelectorAll('a[href*="scan-wifi"]').forEach(link => {
+    link.addEventListener('click', function (e) {
+      e.preventDefault();
+      e.stopPropagation();
+      const dest = this.href;
+      document.getElementById('loadingText').textContent = 'Scanning WiFi Connection';
+      document.getElementById('loadingSubtext').textContent = 'Pinging all devices in your network…';
+      openOverlay('loadingOverlay');
+      setTimeout(() => { window.location.href = dest; }, 420);
+    });
+  });
+
+  /* ── Loading overlay (Metrics) ── */
+  document.querySelectorAll('a[href*="metrics"]').forEach(link => {
+    link.addEventListener('click', function (e) {
+      e.preventDefault();
+      e.stopPropagation();
+      const dest = this.href;
+      document.getElementById('loadingText').textContent = 'System Monitoring';
+      document.getElementById('loadingSubtext').textContent = 'Collecting system metrics…';
+      openOverlay('loadingOverlay');
+      setTimeout(() => { window.location.href = dest; }, 420);
+    });
+  });
+
+  /* ══════════════════════════════════
+     PAGE TRANSITIONS
+     ─────────────────────────────────
+     Generic fallback for all other links.
+     Explicitly skips:
+       • href="#"  (logout buttons)
+       • href*=check_devices  (handled above)
+       • javascript: links
+       • _blank targets
+  ══════════════════════════════════ */
+  const pageOverlay = document.getElementById('page-transition');
+
+  document.querySelectorAll('.table-scroll').forEach(el => {
+    let isDown = false, startX, scrollLeft;
+    el.addEventListener('mousedown', e => { isDown=true; el.classList.add('dragging'); startX=e.pageX-el.offsetLeft; scrollLeft=el.scrollLeft; });
+    el.addEventListener('mouseleave', () => { isDown=false; el.classList.remove('dragging'); });
+    el.addEventListener('mouseup',   () => { isDown=false; el.classList.remove('dragging'); });
+    el.addEventListener('mousemove', e => {
+      if (!isDown) return; e.preventDefault();
+      el.scrollLeft = scrollLeft - (e.pageX - el.offsetLeft - startX);
+    });
+  });
+
+  document.querySelectorAll('a[href]').forEach(link => {
+    const href = link.getAttribute('href');
+    if (!href) return;
+    if (href === '#')                          return; // logout buttons
+    if (href.startsWith('javascript'))         return;
+    if (href.includes('check_devices'))        return; // handled above
+    if (link.getAttribute('target') === '_blank') return;
+    if (link.getAttribute('onclick'))          return;
+    link.addEventListener('click', e => {
+      e.preventDefault();
+      pageOverlay.classList.add('active');
+      setTimeout(() => { window.location.href = href; }, 240);
+    });
+  });
+
+  window.addEventListener('pageshow', () => pageOverlay.classList.remove('active'));
+
+  /* ══════════════════════════════════
+     NAVBAR SCROLL SHRINK / HIDE
+  ══════════════════════════════════ */
+  const navbar = document.querySelector('.navbar');
+  let lastScroll = 0;
+  window.addEventListener('scroll', () => {
+    const y = window.scrollY;
+    navbar.style.height     = y > 20 ? '52px' : 'var(--nav-h)';
+    navbar.style.boxShadow  = y > 20
+      ? '0 2px 40px rgba(0,0,0,0.35)'
+      : '0 1px 0 rgba(167,139,250,0.06), 0 8px 32px rgba(0,0,0,0.12)';
+    if      (y > lastScroll + 8 && y > 80) navbar.style.transform = 'translateY(-100%)';
+    else if (y < lastScroll - 4)           navbar.style.transform = 'translateY(0)';
+    lastScroll = y;
+  }, { passive:true });
+</script>
+
+</body>
+</html>

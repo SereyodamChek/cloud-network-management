@@ -1,0 +1,536 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@300;400;600;700;800;900&display=swap" rel="stylesheet">
+
+<style>
+  *, *::before, *::after { box-sizing: border-box; }
+
+  .wifi-page {
+    font-family: 'Nunito', sans-serif;
+    padding: 36px 0 60px;
+    position: relative;
+  }
+
+  .wifi-orb {
+    position: fixed; border-radius: 50%;
+    filter: blur(110px); pointer-events: none; z-index: 0;
+    animation: orbDrift 18s ease-in-out infinite alternate;
+    transition: opacity 0.45s ease;
+  }
+  .wifi-orb-1 { width:500px;height:500px; background:radial-gradient(circle,#0ea5e9,transparent 70%); top:-100px; right:-80px; opacity:.28; animation-delay:0s; }
+  .wifi-orb-2 { width:380px;height:380px; background:radial-gradient(circle,#6d28d9,transparent 70%); bottom:10%; left:-100px; opacity:.22; animation-delay:7s; }
+  .wifi-orb-3 { width:260px;height:260px; background:radial-gradient(circle,#10b981,transparent 70%); top:40%; right:5%; opacity:.18; animation-delay:13s; }
+  [data-theme="light"] .wifi-orb { opacity:.09 !important; }
+
+  @keyframes orbDrift {
+    from { transform:translate(0,0) scale(1); }
+    to   { transform:translate(28px,40px) scale(1.08); }
+  }
+
+  .wifi-header {
+    display: flex; align-items: center; justify-content: space-between;
+    flex-wrap: wrap; gap: 16px;
+    margin-bottom: 24px; padding: 22px 28px;
+    background: var(--surface);
+    backdrop-filter: blur(24px) saturate(180%);
+    -webkit-backdrop-filter: blur(24px) saturate(180%);
+    border: 1px solid var(--border); border-radius: 22px;
+    position: relative; z-index: 10;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.06);
+    animation: cardIn .6s cubic-bezier(.22,1,.36,1) both;
+    transition: background 0.45s ease, border-color 0.45s ease;
+  }
+
+  @keyframes cardIn {
+    from { opacity:0; transform:translateY(20px); }
+    to   { opacity:1; transform:translateY(0); }
+  }
+
+  .wifi-title { display:flex; align-items:center; gap:16px; }
+  .wifi-title-text h2 {
+    font-size: 21px; font-weight: 800;
+    background: linear-gradient(135deg, var(--text) 40%, var(--sky));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    margin-bottom: 3px;
+  }
+  .wifi-title-text p { font-size: 12px; color: var(--text-muted); font-weight: 500; }
+
+  .live-badge {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 8px 18px; border-radius: 50px;
+    background: rgba(14,165,233,0.10); border: 1px solid rgba(14,165,233,0.25);
+    font-size: 12px; font-weight: 700; color: var(--sky);
+    white-space: nowrap;
+    transition: background 0.45s ease, color 0.45s ease;
+  }
+  [data-theme="light"] .live-badge { background:rgba(2,132,199,0.08); border-color:rgba(2,132,199,0.22); }
+
+  .live-dot {
+    width:7px; height:7px; border-radius:50%;
+    background:var(--sky); box-shadow:0 0 0 0 rgba(56,189,248,0.7);
+    animation:pulseDot 1.8s ease-out infinite;
+  }
+
+  @keyframes pulseDot {
+    0%  { box-shadow:0 0 0 0 rgba(56,189,248,0.7); }
+    70% { box-shadow:0 0 0 8px rgba(56,189,248,0); }
+    100%{ box-shadow:0 0 0 0 rgba(56,189,248,0); }
+  }
+
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px,1fr));
+    gap: 14px; margin-bottom: 24px;
+    position: relative; z-index: 10;
+    animation: cardIn .6s cubic-bezier(.22,1,.36,1) .08s both;
+  }
+
+  .stat-card {
+    padding: 20px; border-radius: 18px;
+    background: var(--surface);
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    border: 1px solid var(--border);
+    display: flex; align-items: center; gap: 14px;
+    position: relative; overflow: hidden; cursor: default;
+    transition: transform .3s cubic-bezier(.34,1.56,.64,1), border-color .3s, background 0.45s ease;
+  }
+  .stat-card:hover { transform:translateY(-4px) scale(1.01); border-color:var(--border-hov); }
+
+  .stat-glow {
+    position:absolute; inset:0;
+    background:radial-gradient(circle at 10% 10%, var(--g) 0%, transparent 65%);
+    opacity:.15; pointer-events:none; transition:opacity 0.3s;
+  }
+  .stat-card:hover .stat-glow { opacity:.28; }
+
+  .stat-icon { font-size:28px; flex-shrink:0; position:relative; z-index:1; }
+  .stat-info { display:flex; flex-direction:column; gap:2px; position:relative; z-index:1; }
+  .stat-lbl { font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.8px; color:var(--text-muted); }
+  .stat-val {
+    font-size:34px; font-weight:900; line-height:1;
+    -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;
+  }
+  .sv-sky    { background:linear-gradient(135deg,var(--text) 30%,var(--sky)); -webkit-background-clip:text; background-clip:text; }
+  .sv-green  { background:linear-gradient(135deg,var(--text) 30%,var(--green)); -webkit-background-clip:text; background-clip:text; }
+  .sv-amber  { background:linear-gradient(135deg,var(--text) 30%,var(--amber)); -webkit-background-clip:text; background-clip:text; }
+
+  .table-card {
+    background: var(--surface);
+    backdrop-filter: blur(24px) saturate(180%);
+    -webkit-backdrop-filter: blur(24px) saturate(180%);
+    border: 1px solid var(--border); border-radius: 22px; overflow: hidden;
+    position: relative; z-index: 10;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.06);
+    animation: cardIn .6s cubic-bezier(.22,1,.36,1) .16s both;
+    transition: background 0.45s ease, border-color 0.45s ease;
+  }
+
+  .table-toolbar {
+    display: flex; align-items: center; justify-content: space-between;
+    flex-wrap: wrap; gap: 12px; padding: 16px 20px;
+    border-bottom: 1px solid var(--border);
+    transition: border-color 0.45s ease;
+  }
+
+  .section-label {
+    display: flex; align-items: center; gap: 9px;
+    font-size: 12px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 1.3px; color: var(--text-muted);
+  }
+
+  .section-dot {
+    width:7px; height:7px; border-radius:50%;
+    background:var(--sky); box-shadow:0 0 8px var(--sky); flex-shrink:0;
+  }
+
+  .search-wrap { position: relative; }
+  .search-icon {
+    position:absolute; left:13px; top:50%; transform:translateY(-50%);
+    font-size:14px; pointer-events:none; color:var(--text-muted); display:flex; align-items:center;
+  }
+
+  .wifi-search {
+    padding: 9px 13px 9px 38px;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 11px; color: var(--text);
+    font-size: 12px; font-family: 'Nunito', sans-serif; font-weight: 600;
+    outline: none; width: 260px;
+    transition: border-color .3s, background .3s, box-shadow .3s, color 0.45s;
+  }
+  .wifi-search::placeholder { color: var(--text-muted); opacity:.7; }
+  .wifi-search:focus {
+    border-color:rgba(56,189,248,0.5);
+    background:rgba(56,189,248,0.06);
+    box-shadow:0 0 0 3px rgba(56,189,248,0.12);
+  }
+
+  .table-scroll { overflow-x: auto; }
+  table { width:100%; border-collapse:collapse; min-width: 1100px; }
+
+  thead tr {
+    background:var(--thead-bg, rgba(255,255,255,0.03));
+    transition: background 0.45s ease;
+  }
+
+  th {
+    padding:12px 20px; font-size:10px; font-weight:700;
+    text-transform:uppercase; letter-spacing:1.3px;
+    color:var(--text-muted); white-space:nowrap; text-align:left;
+    border-bottom:1px solid var(--border);
+  }
+
+  .device-row {
+    opacity:0; transform:translateX(-10px);
+    transition:opacity .4s ease, transform .4s cubic-bezier(.22,1,.36,1);
+  }
+  .device-row.visible { opacity:1; transform:translateX(0); }
+
+  .device-row td {
+    padding:14px 20px; font-size:13px; font-weight:600; color:var(--text);
+    border-bottom:1px solid var(--row-border, rgba(255,255,255,0.04));
+    transition:background .2s ease, color 0.45s ease; vertical-align:middle;
+  }
+  .device-row:last-child td { border-bottom:none; }
+  .device-row:hover td { background:var(--row-hover, rgba(255,255,255,0.03)); }
+
+  .row-num {
+    font-size:11px; font-weight:700; color:var(--text-muted);
+    background:var(--id-bg, rgba(255,255,255,0.06));
+    padding:2px 8px; border-radius:6px;
+    transition: background 0.45s ease, color 0.45s ease;
+  }
+
+  .ip-chip, .mac-chip {
+    display:inline-flex; align-items:center; gap:8px;
+  }
+
+  .ip-dot { width:8px; height:8px; border-radius:50%; background:var(--sky); opacity:.75; flex-shrink:0; }
+
+  .ip-code {
+    font-family:'SF Mono','Fira Code',monospace;
+    font-size:13px; font-weight:600; color:var(--sky);
+    background:rgba(56,189,248,0.10); padding:4px 10px; border-radius:7px;
+    border:1px solid rgba(56,189,248,0.22); letter-spacing:0.3px;
+  }
+
+  .mac-icon { font-size:13px; opacity:.65; flex-shrink:0; display:flex; align-items:center; }
+
+  .mac-code {
+    font-family:'SF Mono','Fira Code',monospace;
+    font-size:12px; font-weight:600; color:var(--violet);
+    background:rgba(124,58,237,0.08); padding:4px 10px; border-radius:7px;
+    border:1px solid rgba(124,58,237,0.18); letter-spacing:0.5px;
+  }
+
+  .vendor-badge, .type-badge, .model-badge, .host-badge {
+    display:inline-flex; align-items:center; gap:7px;
+    padding:5px 12px; border-radius:50px; font-size:12px; font-weight:700;
+    white-space:nowrap; max-width:220px; overflow:hidden; text-overflow:ellipsis;
+    border:1px solid transparent;
+  }
+
+  .vendor-dot, .type-dot, .model-dot, .host-dot {
+    width:6px; height:6px; border-radius:50%; flex-shrink:0;
+  }
+
+  .vendor-badge { background:rgba(251,191,36,0.10); color:var(--amber); border-color:rgba(251,191,36,0.22); }
+  .vendor-badge .vendor-dot { background:var(--amber); }
+
+  .vendor-apple { background:rgba(148,163,184,0.12); color:var(--slate); border-color:rgba(148,163,184,0.25); }
+  .vendor-apple .vendor-dot { background:var(--slate); }
+
+  .vendor-samsung { background:rgba(56,189,248,0.10); color:var(--sky); border-color:rgba(56,189,248,0.22); }
+  .vendor-samsung .vendor-dot { background:var(--sky); }
+
+  .vendor-intel { background:rgba(129,140,248,0.12); color:var(--indigo); border-color:rgba(129,140,248,0.25); }
+  .vendor-intel .vendor-dot { background:var(--indigo); }
+
+  .vendor-cisco { background:rgba(52,211,153,0.10); color:var(--green); border-color:rgba(52,211,153,0.22); }
+  .vendor-cisco .vendor-dot { background:var(--green); }
+
+  .vendor-tp { background:rgba(244,114,182,0.10); color:var(--pink); border-color:rgba(244,114,182,0.22); }
+  .vendor-tp .vendor-dot { background:var(--pink); }
+
+  .vendor-unknown { background:rgba(148,163,184,0.08); color:var(--text-muted); border-color:var(--border); }
+  .vendor-unknown .vendor-dot { background:var(--text-muted); }
+
+  .type-phone { background:rgba(56,189,248,0.10); color:var(--sky); border-color:rgba(56,189,248,0.22); }
+  .type-phone .type-dot { background:var(--sky); }
+
+  .type-router { background:rgba(52,211,153,0.10); color:var(--green); border-color:rgba(52,211,153,0.22); }
+  .type-router .type-dot { background:var(--green); }
+
+  .type-pc { background:rgba(129,140,248,0.12); color:var(--indigo); border-color:rgba(129,140,248,0.22); }
+  .type-pc .type-dot { background:var(--indigo); }
+
+  .type-unknown { background:rgba(148,163,184,0.08); color:var(--text-muted); border-color:var(--border); }
+  .type-unknown .type-dot { background:var(--text-muted); }
+
+  .host-badge {
+    background:rgba(14,165,233,0.08);
+    color:var(--text);
+    border-color:rgba(14,165,233,0.18);
+  }
+  .host-badge .host-dot { background:var(--sky); }
+
+  .model-badge {
+    background:rgba(124,58,237,0.08);
+    color:var(--violet);
+    border-color:rgba(124,58,237,0.18);
+  }
+  .model-badge .model-dot { background:var(--violet); }
+
+  .copy-btn {
+    display:inline-flex; align-items:center; justify-content:center;
+    width:28px; height:28px; border-radius:8px;
+    background:transparent; border:1px solid var(--border);
+    color:var(--text-muted); font-size:13px; cursor:pointer;
+    transition:background .2s, border-color .2s, transform .2s cubic-bezier(.34,1.56,.64,1), color .2s;
+  }
+  .copy-btn:hover { background:var(--surface-hov); border-color:var(--border-hov); color:var(--text); transform:scale(1.12); }
+  .copy-btn.copied { color:var(--green); border-color:rgba(52,211,153,0.4); }
+
+  .empty-state { text-align:center; padding:64px 20px; color:var(--text-muted); }
+  .empty-icon { font-size:52px; margin-bottom:14px; }
+  .empty-state p { font-size:14px; font-weight:600; }
+  .empty-state small { font-size:12px; opacity:.6; }
+
+  @media (max-width: 640px) {
+    .wifi-header { flex-direction:column; align-items:flex-start; }
+    .wifi-search { width:100%; }
+    .table-toolbar { flex-direction:column; align-items:flex-start; }
+    th, .device-row td { padding:11px 14px; }
+  }
+</style>
+
+<div class="wifi-page">
+  <div class="wifi-orb wifi-orb-1"></div>
+  <div class="wifi-orb wifi-orb-2"></div>
+  <div class="wifi-orb wifi-orb-3"></div>
+
+  <div class="wifi-header">
+    <div class="wifi-title">
+      <div class="wifi-title-text">
+        <h2>WiFi Connected Devices</h2>
+        <p>Live view of all devices on the network</p>
+      </div>
+    </div>
+    <div class="live-badge">
+      <span class="live-dot"></span>
+      <span id="deviceCount">{{ devices | length }}</span> Connected
+    </div>
+  </div>
+
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-glow" style="--g:#38bdf8"></div>
+      <div class="stat-icon"><i class="fi fi-sr-wifi"></i></div>
+      <div class="stat-info">
+        <span class="stat-lbl">Total Devices</span>
+        <span class="stat-val sv-sky" id="statTotal">{{ devices | length }}</span>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-glow" style="--g:#34d399"></div>
+      <div class="stat-icon"><i class="fi fi-sr-check-circle"></i></div>
+      <div class="stat-info">
+        <span class="stat-lbl">Active Now</span>
+        <span class="stat-val sv-green" id="statActive">{{ devices | length }}</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="table-card">
+    <div class="table-toolbar">
+      <div class="section-label">
+        <span class="section-dot"></span>
+        Device List
+      </div>
+      <div class="search-wrap">
+        <span class="search-icon"><i class="fi fi-sr-search"></i></span>
+        <input type="text" class="wifi-search" id="wifiSearch" placeholder="Search IP, MAC, vendor, hostname, type or model…">
+      </div>
+    </div>
+
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>IP Address</th>
+            <th>MAC Address</th>
+           
+            <th>Hostname</th>
+            <th>Device Type</th>
+            <th>Possible Model</th>
+            <th>System Device</th>
+          </tr>
+        </thead>
+        <tbody id="deviceTbody">
+          {% for device in devices %}
+          <tr class="device-row"
+              data-search="{{ device.ip }} {{ device.mac }} {{ device.vendor }} {{ device.hostname }} {{ device.device_type }} {{ device.possible_model }}">
+            <td><span class="row-num">{{ loop.index }}</span></td>
+
+            <td>
+              <div class="ip-chip">
+                <span class="ip-dot"></span>
+                <code class="ip-code">{{ device.ip }}</code>
+              </div>
+            </td>
+
+            <td>
+              <div class="mac-chip">
+                <span class="mac-icon"><i class="fi fi-sr-link"></i></span>
+                <code class="mac-code">{{ device.mac }}</code>
+              </div>
+            </td>
+
+            <td>
+              {% set v = device.vendor | lower %}
+              {% if 'apple' in v %}
+                <span class="vendor-badge vendor-apple"><span class="vendor-dot"></span>{{ device.vendor }}</span>
+              {% elif 'samsung' in v %}
+                <span class="vendor-badge vendor-samsung"><span class="vendor-dot"></span>{{ device.vendor }}</span>
+              {% elif 'intel' in v %}
+                <span class="vendor-badge vendor-intel"><span class="vendor-dot"></span>{{ device.vendor }}</span>
+              {% elif 'cisco' in v %}
+                <span class="vendor-badge vendor-cisco"><span class="vendor-dot"></span>{{ device.vendor }}</span>
+              {% elif 'tp-link' in v or 'tp link' in v %}
+                <span class="vendor-badge vendor-tp"><span class="vendor-dot"></span>{{ device.vendor }}</span>
+              {% elif device.vendor == '' or device.vendor == 'Unknown' %}
+                <span class="vendor-badge vendor-unknown"><span class="vendor-dot"></span>Unknown</span>
+              {% else %}
+                <span class="vendor-badge"><span class="vendor-dot"></span>{{ device.vendor }}</span>
+              {% endif %}
+            </td>
+
+            <td>
+              {% if device.hostname and device.hostname != 'Unknown' %}
+                <span class="host-badge"><span class="host-dot"></span>{{ device.hostname }}</span>
+              {% else %}
+                <span class="host-badge" style="opacity:.65;"><span class="host-dot"></span>Unknown</span>
+              {% endif %}
+            </td>
+
+            <td>
+              {% set t = device.device_type | lower %}
+              {% if 'iphone' in t or 'ipad' in t or 'android' in t %}
+                <span class="type-badge type-phone"><span class="type-dot"></span>{{ device.device_type }}</span>
+              {% elif 'router' in t or 'switch' in t or 'ap' in t %}
+                <span class="type-badge type-router"><span class="type-dot"></span>{{ device.device_type }}</span>
+              {% elif 'pc' in t or 'laptop' in t or 'mac' in t %}
+                <span class="type-badge type-pc"><span class="type-dot"></span>{{ device.device_type }}</span>
+              {% else %}
+                <span class="type-badge type-unknown"><span class="type-dot"></span>{{ device.device_type }}</span>
+              {% endif %}
+            </td>
+
+            <td>
+              {% if device.possible_model and device.possible_model != 'Unknown' %}
+                <span class="model-badge"><span class="model-dot"></span>{{ device.possible_model }}</span>
+              {% else %}
+                <span class="model-badge" style="opacity:.65;"><span class="model-dot"></span>Unknown</span>
+              {% endif %}
+            </td>
+
+            <td>
+              <button class="copy-btn" title="Copy row"
+                data-copy="{{ device.ip }} | {{ device.mac }} | {{ device.vendor }} | {{ device.hostname }} | {{ device.device_type }} | {{ device.possible_model }}"
+                onclick="copyEntry(this)">
+                <i class="fi fi-sr-copy"></i>
+              </button>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+
+      {% if not devices %}
+      <div class="empty-state">
+        <div class="empty-icon"><i class="fi fi-sr-wifi"></i></div>
+        <p>No devices found on the network</p>
+        <small>Devices will appear here once they connect to WiFi</small>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<script>
+  document.querySelectorAll('.device-row').forEach((row, i) => {
+    setTimeout(() => row.classList.add('visible'), 100 + i * 50);
+  });
+
+  (function countVendors() {
+    const vendors = new Set();
+    document.querySelectorAll('.device-row').forEach(row => {
+      const searchText = row.dataset.search || '';
+      const parts = searchText.split(' ');
+      const vendor = parts.slice(2, 5).join(' ').trim();
+      if (vendor && vendor.toLowerCase() !== 'unknown') vendors.add(vendor.toLowerCase());
+    });
+    document.getElementById('statVendors').textContent = vendors.size || 0;
+  })();
+
+  ['statTotal', 'statActive', 'statVendors'].forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    const target = parseInt(el.textContent, 10) || 0;
+    el.textContent = '0';
+    const dur = 900, start = performance.now();
+    const tick = now => {
+      const p = Math.min((now - start) / dur, 1);
+      el.textContent = Math.round((1 - Math.pow(2, -10 * p)) * target);
+      if (p < 1) requestAnimationFrame(tick);
+    };
+    setTimeout(() => requestAnimationFrame(tick), 300);
+  });
+
+  document.getElementById('wifiSearch').addEventListener('input', function () {
+    const q = this.value.toLowerCase();
+    let count = 0;
+    document.querySelectorAll('.device-row').forEach(row => {
+      const match = row.dataset.search.toLowerCase().includes(q);
+      row.style.display = match ? '' : 'none';
+      if (match) count++;
+    });
+    document.getElementById('deviceCount').textContent = count;
+  });
+
+  function copyEntry(btn) {
+    navigator.clipboard.writeText(btn.dataset.copy).then(() => {
+      btn.innerHTML = '<i class="fi fi-sr-check" style="color:#34d399;"></i>';
+      btn.classList.add('copied');
+      setTimeout(() => {
+        btn.innerHTML = '<i class="fi fi-sr-copy"></i>';
+        btn.classList.remove('copied');
+      }, 1800);
+    }).catch(() => {
+      btn.innerHTML = '<i class="fi fi-sr-cross" style="color:#f87171;"></i>';
+      setTimeout(() => {
+        btn.innerHTML = '<i class="fi fi-sr-copy"></i>';
+      }, 1500);
+    });
+  }
+
+  document.querySelectorAll('.stat-card').forEach(card => {
+    card.addEventListener('mousemove', e => {
+      const r = card.getBoundingClientRect();
+      const x = (e.clientX - r.left) / r.width  - 0.5;
+      const y = (e.clientY - r.top)  / r.height - 0.5;
+      card.style.transform = `translateY(-4px) scale(1.01) rotateX(${-y * 7}deg) rotateY(${x * 7}deg)`;
+    });
+    card.addEventListener('mouseenter', () => {
+      card.style.transition = 'transform 0.1s ease, border-color .3s';
+    });
+    card.addEventListener('mouseleave', () => {
+      card.style.transform = '';
+      card.style.transition = 'transform 0.5s cubic-bezier(.34,1.56,.64,1), border-color .3s';
+    });
+  });
+</script>
+
+{% endblock %}

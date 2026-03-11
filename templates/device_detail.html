@@ -1,0 +1,305 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@300;400;600;700;800;900&display=swap" rel="stylesheet">
+
+<style>
+  *, *::before, *::after { box-sizing: border-box; }
+
+  .detail-page {
+    font-family: 'Nunito', sans-serif;
+    min-height: 80vh;
+    display: flex; align-items: flex-start; justify-content: center;
+    padding: 40px 16px 60px;
+  }
+
+  .detail-orb {
+    position: fixed; border-radius: 50%;
+    filter: blur(100px); pointer-events: none; z-index: 0;
+    animation: dOrbDrift 16s ease-in-out infinite alternate;
+    transition: opacity 0.45s ease;
+  }
+  .detail-orb-1 { width:460px;height:460px; background:radial-gradient(circle,#7c3aed,transparent 70%); top:-100px; right:-80px;  opacity:.28; animation-delay:0s; }
+  .detail-orb-2 { width:360px;height:360px; background:radial-gradient(circle,#0ea5e9,transparent 70%); bottom:5%;  left:-80px;  opacity:.22; animation-delay:7s; }
+  [data-theme="light"] .detail-orb { opacity:.10 !important; }
+  @keyframes dOrbDrift {
+    from { transform:translate(0,0) scale(1); }
+    to   { transform:translate(24px,36px) scale(1.08); }
+  }
+
+  .detail-wrap {
+    position: relative; z-index: 10;
+    width: 100%; max-width: 560px;
+    animation: cardIn .7s cubic-bezier(.22,1,.36,1) both;
+  }
+  @keyframes cardIn {
+    from { opacity:0; transform:translateY(28px) scale(.97); }
+    to   { opacity:1; transform:translateY(0) scale(1); }
+  }
+
+  .detail-hero {
+    background: var(--surface);
+    backdrop-filter: blur(28px) saturate(180%);
+    -webkit-backdrop-filter: blur(28px) saturate(180%);
+    border: 1px solid var(--border);
+    border-radius: 26px; padding: 32px 28px 28px; margin-bottom: 16px;
+    box-shadow: 0 4px 32px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.06);
+    transition: background 0.45s ease, border-color 0.45s ease;
+  }
+
+  /* .hero-top { display:flex; align-items:center; gap:18px; margin-bottom:26px; }
+  .hero-avatar {
+    width:64px; height:64px; border-radius:18px;
+    background: linear-gradient(135deg,#7c3aed,#38bdf8);
+    display:flex; align-items:center; justify-content:center;
+    font-size:28px; flex-shrink:0;
+    box-shadow:0 10px 32px rgba(124,58,237,.45);
+    animation:avatarGlow 3.5s ease-in-out infinite alternate;
+  } */
+  @keyframes avatarGlow {
+    from { box-shadow:0 10px 32px rgba(124,58,237,.45); }
+    to   { box-shadow:0 10px 44px rgba(56,189,248,.60); }
+  }
+  .hero-meta { flex:1; min-width:0; }
+  .hero-name {
+    font-size:22px; font-weight:900;
+    background: linear-gradient(135deg, var(--text) 40%, var(--violet));
+    -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-bottom:5px;
+  }
+  .hero-badges { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+
+  .type-pill { display:inline-block; padding:3px 11px; border-radius:50px; font-size:11px; font-weight:700; }
+  .type-router  { background:rgba(129,140,248,.15); color:#818cf8; border:1px solid rgba(129,140,248,.30); }
+  .type-switch  { background:rgba(251,191,36,.12);  color:#fbbf24; border:1px solid rgba(251,191,36,.30); }
+  .type-pc      { background:rgba(52,211,153,.12);  color:#34d399; border:1px solid rgba(52,211,153,.30); }
+  .type-phone   { background:rgba(244,114,182,.12); color:#f472b6; border:1px solid rgba(244,114,182,.30); }
+  .type-server  { background:rgba(56,189,248,.12);  color:#38bdf8; border:1px solid rgba(56,189,248,.30); }
+  .type-default { background:rgba(148,163,184,.12); color:#94a3b8; border:1px solid rgba(148,163,184,.30); }
+  [data-theme="light"] .type-router  { background:rgba(79,70,229,.10);   color:#4f46e5; border-color:rgba(79,70,229,.25); }
+  [data-theme="light"] .type-switch  { background:rgba(217,119,6,.10);   color:#b45309; border-color:rgba(217,119,6,.25); }
+  [data-theme="light"] .type-pc      { background:rgba(5,150,105,.10);   color:#047857; border-color:rgba(5,150,105,.25); }
+  [data-theme="light"] .type-phone   { background:rgba(219,39,119,.10);  color:#be185d; border-color:rgba(219,39,119,.25); }
+  [data-theme="light"] .type-server  { background:rgba(2,132,199,.10);   color:#0369a1; border-color:rgba(2,132,199,.25); }
+  [data-theme="light"] .type-default { background:rgba(100,116,128,.10); color:#475569; border-color:rgba(100,116,128,.25); }
+
+  .id-chip {
+    font-size:11px; font-weight:700; color:var(--text-muted);
+    background:var(--id-bg, rgba(255,255,255,.06)); border:1px solid var(--border);
+    padding:3px 9px; border-radius:6px;
+    transition: background 0.45s ease, color 0.45s ease;
+  }
+
+  .status-pill { display:inline-flex; align-items:center; gap:6px; padding:4px 11px; border-radius:50px; font-size:11px; font-weight:700; }
+  .status-pill.online  { background:rgba(52,211,153,.15);  color:#34d399; border:1px solid rgba(52,211,153,.30); }
+  .status-pill.offline { background:rgba(248,113,113,.15); color:#f87171; border:1px solid rgba(248,113,113,.30); }
+  .status-pill.unknown { background:rgba(148,163,184,.15); color:#94a3b8; border:1px solid rgba(148,163,184,.30); }
+  [data-theme="light"] .status-pill.online  { background:rgba(5,150,105,.10);   color:#047857; border-color:rgba(5,150,105,.30); }
+  [data-theme="light"] .status-pill.offline { background:rgba(220,38,38,.10);   color:#b91c1c; border-color:rgba(220,38,38,.30); }
+  [data-theme="light"] .status-pill.unknown { background:rgba(100,116,128,.10); color:#475569; border-color:rgba(100,116,128,.30); }
+
+  .pulse-dot {
+    width:6px; height:6px; border-radius:50%; background:#34d399;
+    animation:pulseRing 1.8s ease-out infinite; box-shadow:0 0 0 0 rgba(52,211,153,.7);
+  }
+  [data-theme="light"] .pulse-dot { background:#047857; }
+  @keyframes pulseRing {
+    0%  { box-shadow:0 0 0 0 rgba(52,211,153,.7); }
+    70% { box-shadow:0 0 0 7px rgba(52,211,153,0); }
+    100%{ box-shadow:0 0 0 0 rgba(52,211,153,0); }
+  }
+
+  .hero-divider {
+    height:1px;
+    background: linear-gradient(90deg,transparent,var(--border),transparent);
+    margin-bottom:22px;
+  }
+
+  .info-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+  .info-item {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius:14px; padding:14px 16px;
+    opacity:0; transform:translateY(12px);
+    animation:itemIn .45s cubic-bezier(.22,1,.36,1) forwards;
+    transition: background 0.45s ease, border-color 0.45s ease;
+  }
+  .info-item:nth-child(1){animation-delay:.12s;}
+  .info-item:nth-child(2){animation-delay:.18s;}
+  .info-item:nth-child(3){animation-delay:.24s;}
+  .info-item:nth-child(4){animation-delay:.30s;}
+  .info-item:nth-child(5){animation-delay:.36s; grid-column:1/-1;}
+  @keyframes itemIn { to { opacity:1; transform:translateY(0); } }
+
+  .info-label {
+    display:flex; align-items:center; gap:6px;
+    font-size:10px; font-weight:700;
+    text-transform:uppercase; letter-spacing:1px;
+    color:var(--text-muted); margin-bottom:6px;
+  }
+  .info-label-dot { width:5px; height:5px; border-radius:50%; flex-shrink:0; }
+  .info-value { font-size:14px; font-weight:700; color:var(--text); word-break:break-all; }
+
+  .ip-code {
+    font-family:'SF Mono','Fira Code',monospace;
+    font-size:13px; color:var(--sky);
+    background:rgba(56,189,248,.10); padding:3px 8px; border-radius:6px;
+    border:1px solid rgba(56,189,248,.22);
+    transition: background 0.45s ease, color 0.45s ease;
+  }
+  [data-theme="light"] .ip-code { background:rgba(2,132,199,.08); border-color:rgba(2,132,199,.22); }
+
+  .response-val { color:var(--amber); font-weight:800; }
+  .response-val small { font-size:10px; color:var(--text-muted); margin-left:2px; }
+  .location-val { color:var(--text-muted); }
+  .time-val { color:var(--text-muted); font-size:13px; }
+  .na-val { color:var(--na-color, rgba(232,234,246,.25)); font-weight:500; }
+
+  .response-bar-wrap {
+    margin-top:8px; height:4px; border-radius:2px;
+    background:var(--border); overflow:hidden;
+  }
+  .response-bar {
+    height:100%; border-radius:2px;
+    background:linear-gradient(90deg,#34d399,#fbbf24);
+    transform-origin:left; transform:scaleX(0);
+    animation:barGrow .8s cubic-bezier(.22,1,.36,1) .6s forwards;
+  }
+  @keyframes barGrow { to { transform:scaleX(1); } }
+
+  .detail-actions {
+    display:flex; gap:12px;
+    opacity:0; animation:itemIn .45s cubic-bezier(.22,1,.36,1) .5s forwards;
+  }
+
+  .btn-back {
+    flex:1; padding:13px; border-radius:13px;
+    border:1px solid var(--border); background:var(--surface);
+    color:var(--text-muted);
+    font-size:14px; font-family:'Nunito',sans-serif; font-weight:700;
+    text-decoration:none; text-align:center;
+    display:flex; align-items:center; justify-content:center; gap:7px;
+    transition:background .25s ease, border-color .25s ease, transform .25s cubic-bezier(.34,1.56,.64,1), color .25s ease;
+  }
+  .btn-back:hover {
+    background:var(--surface-hov); border-color:var(--border-hov);
+    transform:translateY(-2px); color:var(--text);
+  }
+
+  .btn-edit {
+    flex:2; padding:13px; border-radius:13px; border:none;
+    background:linear-gradient(135deg,#7c3aed,#0ea5e9);
+    color:#fff; font-size:14px; font-family:'Nunito',sans-serif; font-weight:800;
+    letter-spacing:.4px; text-decoration:none;
+    display:flex; align-items:center; justify-content:center; gap:8px;
+    position:relative; overflow:hidden;
+    transition:transform .25s cubic-bezier(.34,1.56,.64,1), box-shadow .3s ease;
+    box-shadow:0 6px 24px rgba(124,58,237,.38);
+  }
+  .btn-edit:hover { transform:translateY(-3px) scale(1.01); box-shadow:0 14px 40px rgba(124,58,237,.5); }
+  .btn-edit:active { transform:scale(.98); }
+  .btn-edit::after {
+    content:''; position:absolute; top:0; left:-120%;
+    width:70%; height:100%;
+    background:linear-gradient(90deg,transparent,rgba(255,255,255,.18),transparent);
+    transform:skewX(-20deg); animation:shimmer 3.5s ease-in-out infinite;
+  }
+  @keyframes shimmer { 0%{left:-120%} 50%,100%{left:140%} }
+
+  @media (max-width:520px) {
+    .detail-hero { padding:24px 18px 20px; }
+    .info-grid { grid-template-columns:1fr; }
+    .info-item:nth-child(5) { grid-column:unset; }
+    .hero-name { font-size:18px; }
+    .hero-avatar { width:52px; height:52px; font-size:22px; }
+    .detail-actions { flex-direction:column; }
+    .btn-back,.btn-edit { flex:unset; width:100%; }
+  }
+</style>
+
+<div class="detail-page">
+  <div class="detail-orb detail-orb-1"></div>
+  <div class="detail-orb detail-orb-2"></div>
+
+  <div class="detail-wrap">
+    <div class="detail-hero">
+      <div class="hero-top">
+        <div class="hero-avatar">
+          {% set t = device.device_type | lower %}
+          <!-- {% if t=='router'%}<i class="fi fi-sr-share"></i>{% elif t=='switch'%}<i class="fi fi-sr-plug"></i>{% elif t=='server'%}<i class="fi fi-sr-server"></i>{% elif t=='phone'%}<i class="fi fi-sr-mobile"></i>{% else %}<i class="fi fi-sr-computer"></i>{% endif %} -->
+        </div>
+        <div class="hero-meta">
+          <div class="hero-name">{{ device.device_name }}</div>
+          <div class="hero-badges">
+            <span class="id-chip">#{{ device.id }}</span>
+            <span class="type-pill {% if t=='router'%}type-router{% elif t=='switch'%}type-switch{% elif t=='pc'%}type-pc{% elif t=='phone'%}type-phone{% elif t=='server'%}type-server{% else %}type-default{% endif %}">{{ device.device_type }}</span>
+            {% if device.status=='Online'%}<span class="status-pill online"><span class="pulse-dot"></span>Online</span>
+            {% elif device.status=='Offline'%}<span class="status-pill offline">Offline</span>
+            {% else %}<span class="status-pill unknown">Unknown</span>{% endif %}
+          </div>
+        </div>
+      </div>
+
+      <div class="hero-divider"></div>
+
+      <div class="info-grid">
+        <div class="info-item">
+          <div class="info-label"><span class="info-label-dot" style="background:var(--sky);box-shadow:0 0 5px var(--sky)"></span>IP Address</div>
+          <div class="info-value"><code class="ip-code">{{ device.ip_address }}</code></div>
+        </div>
+        <div class="info-item">
+          <div class="info-label"><span class="info-label-dot" style="background:var(--amber);box-shadow:0 0 5px var(--amber)"></span>Response Time</div>
+          <div class="info-value">
+            {% if device.response_time %}
+              <span class="response-val">{{ device.response_time }}<small>ms</small></span>
+              <div class="response-bar-wrap"><div class="response-bar" style="width:{{ [device.response_time/2,100]|min }}%"></div></div>
+            {% else %}<span class="na-val">Not available</span>{% endif %}
+          </div>
+        </div>
+        <div class="info-item">
+          <div class="info-label"><span class="info-label-dot" style="background:var(--amber);box-shadow:0 0 5px var(--amber)"></span>Location</div>
+          <div class="info-value">
+            {% if device.location %}<span class="location-val"><i class="fi fi-sr-map-marker"></i> {{ device.location }}</span>
+            {% else %}<span class="na-val">—</span>{% endif %}
+          </div>
+        </div>
+        <div class="info-item">
+          <div class="info-label"><span class="info-label-dot" style="background:var(--green);box-shadow:0 0 5px var(--green)"></span>Status</div>
+          <div class="info-value">
+            {% if device.status=='Online'%}<span class="status-pill online" style="font-size:12px;"><span class="pulse-dot"></span>Online</span>
+            {% elif device.status=='Offline'%}<span class="status-pill offline" style="font-size:12px;">Offline</span>
+            {% else %}<span class="status-pill unknown" style="font-size:12px;">Unknown</span>{% endif %}
+          </div>
+        </div>
+        <div class="info-item">
+          <div class="info-label"><span class="info-label-dot" style="background:var(--violet);box-shadow:0 0 5px var(--violet)"></span>Last Checked</div>
+          <div class="info-value">
+            {% if device.last_checked %}<span class="time-val"><i class="fi fi-sr-clock"></i> {{ device.last_checked }}</span>
+            {% else %}<span class="na-val">Not checked yet</span>{% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="detail-actions">
+      <a href="{{ url_for('devices') }}" class="btn-back"><i class="fi fi-sr-arrow-left"></i> Back to Devices</a>
+      <a href="{{ url_for('edit_device', device_id=device.id) }}" class="btn-edit"><i class="fi fi-sr-edit"></i> Edit Device</a>
+    </div>
+  </div>
+</div>
+
+<script>
+  document.querySelector('.btn-edit').addEventListener('click', function(e) {
+    const ripple = document.createElement('span');
+    const rect = this.getBoundingClientRect(), size = Math.max(rect.width, rect.height);
+    Object.assign(ripple.style, { position:'absolute', width:size+'px', height:size+'px',
+      left:(e.clientX-rect.left-size/2)+'px', top:(e.clientY-rect.top-size/2)+'px',
+      background:'rgba(255,255,255,.22)', borderRadius:'50%',
+      transform:'scale(0)', transition:'transform .5s ease, opacity .5s ease', opacity:'1', pointerEvents:'none' });
+    this.appendChild(ripple);
+    requestAnimationFrame(()=>{ ripple.style.transform='scale(2.5)'; ripple.style.opacity='0'; });
+    setTimeout(()=>ripple.remove(), 550);
+  });
+</script>
+
+{% endblock %}

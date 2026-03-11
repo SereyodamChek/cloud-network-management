@@ -1,0 +1,176 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@300;400;600;700;800;900&display=swap" rel="stylesheet">
+
+<div class="dash-wrapper">
+
+  <!-- Ambient background orbs -->
+  <div class="orb orb-1"></div>
+  <div class="orb orb-2"></div>
+  <div class="orb orb-3"></div>
+  <div class="orb orb-4"></div>
+
+  <!-- Header -->
+  <div class="dash-header reveal">
+    <div class="dash-title">
+      <span class="dash-icon"><i class="fi fi-sr-wifi-alt"></i></span>
+      <div>
+        <h2>Network Dashboard</h2>
+        <p class="dash-sub">Real-time device monitoring</p>
+      </div>
+    </div>
+    <div class="dash-time" id="liveTime"></div>
+  </div>
+
+  <!-- Stat Cards -->
+  <div class="card-grid">
+    <div class="stat-card card-total reveal delay-1">
+      <div class="stat-glow" style="--g:#a78bfa"></div>
+      <div class="stat-icon"><i class="fi fi-sr-wifi"></i></div>
+      <div class="stat-info">
+        <span class="stat-label">Total Devices</span>
+        <span class="stat-value counter" data-target="{{ total_devices }}">0</span>
+      </div>
+    </div>
+    <div class="stat-card card-online reveal delay-2">
+      <div class="stat-glow" style="--g:#34d399"></div>
+      <div class="stat-icon"><i class="fi fi-sr-check-circle"></i></div>
+      <div class="stat-info">
+        <span class="stat-label">Online</span>
+        <span class="stat-value counter" data-target="{{ online_devices }}">0</span>
+      </div>
+    </div>
+    <div class="stat-card card-offline reveal delay-3">
+      <div class="stat-glow" style="--g:#f87171"></div>
+      <div class="stat-icon"><i class="fi fi-sr-cross-circle"></i></div>
+      <div class="stat-info">
+        <span class="stat-label">Offline</span>
+        <span class="stat-value counter" data-target="{{ offline_devices }}">0</span>
+      </div>
+    </div>
+    <div class="stat-card card-unknown reveal delay-4">
+      <div class="stat-glow" style="--g:#94a3b8"></div>
+      <div class="stat-icon"><i class="fi fi-sr-help"></i></div>
+      <div class="stat-info">
+        <span class="stat-label">Unknown</span>
+        <span class="stat-value counter" data-target="{{ unknown_devices }}">0</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Charts -->
+  <div class="section-label reveal delay-2">
+    <span class="section-dot" style="background:linear-gradient(135deg,#a78bfa,#38bdf8)"></span>
+    Network Analytics
+  </div>
+
+  <div class="chart-grid">
+    <div class="chart-card reveal delay-3">
+      <div class="chart-top">
+        <div class="chart-title-wrap">
+          <span class="chart-icon"><i class="fi fi-sr-chart-pie-alt"></i></span>
+          <div>
+            <h4>Device Status Overview</h4>
+            <p class="chart-desc">Real-time device connectivity status</p>
+          </div>
+        </div>
+        <span class="chart-badge"><span class="pulse-dot-mini"></span>Live</span>
+      </div>
+      <div class="chart-wrap">
+        <canvas id="statusChart"></canvas>
+      </div>
+    </div>
+    <div class="chart-card reveal delay-4">
+      <div class="chart-top">
+        <div class="chart-title-wrap">
+          <span class="chart-icon"><i class="fi fi-sr-chart-simple"></i></span>
+          <div>
+            <h4>Device Type Distribution</h4>
+            <p class="chart-desc">Network device inventory breakdown</p>
+          </div>
+        </div>
+        <span class="chart-badge"><span class="pulse-dot-mini"></span>Live</span>
+      </div>
+      <div class="chart-wrap">
+        <canvas id="typeChart"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- Table -->
+  <div class="section-label reveal delay-2">
+    Device Status Table
+  </div>
+
+  <div class="table-card reveal delay-3">
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Device Name</th>
+            <th>IP Address</th>
+            <th>Device Type</th>
+            <th>Status</th>
+            <th>Response Time</th>
+            <th>Last Checked</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for device in devices %}
+          <tr class="table-row">
+            <td><span class="id-badge">#{{ device.id }}</span></td>
+            <td><span class="device-name">{{ device.device_name }}</span></td>
+            <td><code class="ip-code">{{ device.ip_address }}</code></td>
+            <td>
+              <span class="type-pill type-{{ device.device_type | lower }}">{{ device.device_type }}</span>
+            </td>
+            <td>
+              {% if device.status == 'Online' %}
+                <span class="status-pill online"><span class="pulse-dot"></span>Online</span>
+              {% elif device.status == 'Offline' %}
+                <span class="status-pill offline">Offline</span>
+              {% else %}
+                <span class="status-pill unknown">Unknown</span>
+              {% endif %}
+            </td>
+            <td>
+              {% if device.response_time %}
+                <span class="response-time">{{ device.response_time }} <small>ms</small></span>
+              {% else %}
+                <span class="na-text">—</span>
+              {% endif %}
+            </td>
+            <td>
+              {% if device.last_checked %}
+                <span class="time-text">{{ device.last_checked }}</span>
+              {% else %}
+                <span class="na-text">Not checked</span>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="{{ url_for('static', filename='js/main.js') }}"></script>
+<script>
+  const onlineDevices  = {{ online_devices }};
+  const offlineDevices = {{ offline_devices }};
+  const unknownDevices = {{ unknown_devices }};
+  const routerCount    = {{ router_count }};
+  const switchCount    = {{ switch_count }};
+  const pcCount        = {{ pc_count }};
+  const phoneCount     = {{ phone_count }};
+  const serverCount    = {{ server_count }};
+
+  initCharts(onlineDevices, offlineDevices, unknownDevices,
+             routerCount, switchCount, pcCount, phoneCount, serverCount);
+</script>
+{% endblock %}

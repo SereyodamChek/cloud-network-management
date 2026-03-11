@@ -1,0 +1,249 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@300;400;600;700;800;900&display=swap" rel="stylesheet">
+
+<style>
+  *, *::before, *::after { box-sizing: border-box; }
+
+  .edit-page {
+    min-height: 80vh; display:flex;
+    align-items:center; justify-content:center;
+    padding:40px 16px; font-family:'Nunito',sans-serif;
+  }
+
+  .edit-orb {
+    position:fixed; border-radius:50%; filter:blur(90px);
+    pointer-events:none; z-index:0;
+    animation:editOrbDrift 14s ease-in-out infinite alternate;
+    transition: opacity 0.45s ease;
+  }
+  .edit-orb-1 { width:420px;height:420px; background:radial-gradient(circle,#7c3aed,transparent 70%); top:-100px; right:-100px; opacity:.30; animation-delay:0s; }
+  .edit-orb-2 { width:320px;height:320px; background:radial-gradient(circle,#0ea5e9,transparent 70%); bottom:0; left:-80px; opacity:.22; animation-delay:5s; }
+  [data-theme="light"] .edit-orb { opacity:.10 !important; }
+  @keyframes editOrbDrift {
+    from { transform:translate(0,0) scale(1); }
+    to   { transform:translate(20px,30px) scale(1.08); }
+  }
+
+  .edit-card {
+    position:relative; z-index:10; width:100%; max-width:460px;
+    background:var(--surface);
+    backdrop-filter:blur(32px) saturate(180%);
+    -webkit-backdrop-filter:blur(32px) saturate(180%);
+    border:1px solid var(--border); border-radius:26px; padding:38px 34px 34px;
+    box-shadow: 0 4px 40px rgba(0,0,0,0.10), inset 0 1px 0 rgba(255,255,255,0.06);
+    animation:cardIn .7s cubic-bezier(.22,1,.36,1) both;
+    transition: background 0.45s ease, border-color 0.45s ease;
+  }
+  @keyframes cardIn {
+    from { opacity:0; transform:translateY(32px) scale(.97); }
+    to   { opacity:1; transform:translateY(0) scale(1); }
+  }
+
+  .edit-header { display:flex; align-items:center; gap:14px; margin-bottom:32px; }
+  .edit-header-icon {
+    width:48px; height:48px; border-radius:14px;
+    background:linear-gradient(135deg,#7c3aed,#38bdf8);
+    display:flex; align-items:center; justify-content:center;
+    font-size:22px; flex-shrink:0;
+    box-shadow:0 8px 24px rgba(124,58,237,.40);
+    animation:iconPulse 3s ease-in-out infinite alternate;
+  }
+  @keyframes iconPulse {
+    from { box-shadow:0 8px 24px rgba(124,58,237,.40); }
+    to   { box-shadow:0 8px 36px rgba(56,189,248,.55); }
+  }
+  .edit-header-text h2 {
+    font-size:20px; font-weight:800;
+    background:linear-gradient(135deg, var(--text) 40%, var(--violet));
+    -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;
+    margin-bottom:3px;
+  }
+  .edit-header-text p { font-size:12px; color:var(--text-muted); font-weight:500; }
+
+  .edit-divider {
+    height:1px;
+    background:linear-gradient(90deg,transparent,var(--border),transparent);
+    margin-bottom:28px;
+  }
+
+  .field-group { display:flex; flex-direction:column; gap:18px; margin-bottom:28px; }
+
+  .field-item {
+    display:flex; flex-direction:column; gap:7px;
+    opacity:0; transform:translateX(-14px);
+    animation:fieldSlide .5s cubic-bezier(.22,1,.36,1) forwards;
+  }
+  .field-item:nth-child(1){animation-delay:.10s;}
+  .field-item:nth-child(2){animation-delay:.18s;}
+  .field-item:nth-child(3){animation-delay:.26s;}
+  .field-item:nth-child(4){animation-delay:.34s;}
+  @keyframes fieldSlide { to { opacity:1; transform:translateX(0); } }
+
+  .field-label {
+    display:flex; align-items:center; gap:7px;
+    font-size:11px; font-weight:700;
+    text-transform:uppercase; letter-spacing:1px;
+    color:var(--text-muted);
+  }
+  .field-label-dot { width:6px; height:6px; border-radius:50%; flex-shrink:0; }
+
+  .field-item.f-name .field-label-dot { background:#a78bfa; box-shadow:0 0 6px #a78bfa; }
+  .field-item.f-ip   .field-label-dot { background:#38bdf8; box-shadow:0 0 6px #38bdf8; }
+  .field-item.f-type .field-label-dot { background:#34d399; box-shadow:0 0 6px #34d399; }
+  .field-item.f-loc  .field-label-dot { background:#fbbf24; box-shadow:0 0 6px #fbbf24; }
+
+  [data-theme="light"] .field-item.f-name .field-label-dot { background:#7c3aed; box-shadow:0 0 6px #7c3aed; }
+  [data-theme="light"] .field-item.f-ip   .field-label-dot { background:#0284c7; box-shadow:0 0 6px #0284c7; }
+  [data-theme="light"] .field-item.f-type .field-label-dot { background:#059669; box-shadow:0 0 6px #059669; }
+  [data-theme="light"] .field-item.f-loc  .field-label-dot { background:#d97706; box-shadow:0 0 6px #d97706; }
+
+  .optional-tag {
+    margin-left:auto; font-size:10px; font-weight:700;
+    color:var(--text-muted);
+    background:var(--surface); border:1px solid var(--border);
+    padding:1px 8px; border-radius:50px; letter-spacing:0.5px; text-transform:uppercase;
+  }
+
+  .field-input-wrap { position:relative; }
+  .field-prefix {
+    position:absolute; left:14px; top:50%; transform:translateY(-50%);
+    font-size:16px; pointer-events:none;
+    transition:transform .3s cubic-bezier(.34,1.56,.64,1); z-index:2;
+  }
+
+  .field-item input {
+    width:100%; padding:13px 14px 13px 44px;
+    background:var(--surface); border:1px solid var(--border);
+    border-radius:13px; color:var(--text);
+    font-size:14px; font-family:'Nunito',sans-serif; font-weight:600;
+    outline:none;
+    transition:border-color .3s ease, background .3s ease, box-shadow .3s ease, color 0.45s ease;
+  }
+  .field-item input::placeholder { color:var(--text-muted); font-weight:500; opacity:0.7; }
+
+  .field-item.f-name input:focus { border-color:rgba(167,139,250,.55); background:rgba(167,139,250,.07); box-shadow:0 0 0 3px rgba(167,139,250,.12); }
+  .field-item.f-ip   input:focus { border-color:rgba(56,189,248,.55);  background:rgba(56,189,248,.07);  box-shadow:0 0 0 3px rgba(56,189,248,.12); }
+  .field-item.f-type input:focus { border-color:rgba(52,211,153,.55);  background:rgba(52,211,153,.07);  box-shadow:0 0 0 3px rgba(52,211,153,.12); }
+  .field-item.f-loc  input:focus { border-color:rgba(251,191,36,.55);  background:rgba(251,191,36,.07);  box-shadow:0 0 0 3px rgba(251,191,36,.12); }
+
+  .edit-actions {
+    display:flex; gap:12px;
+    opacity:0; animation:fieldSlide .5s cubic-bezier(.22,1,.36,1) .42s forwards;
+  }
+
+  .btn-cancel {
+    flex:1; padding:13px; border-radius:13px;
+    border:1px solid var(--border); background:var(--surface);
+    color:var(--text-muted);
+    font-size:14px; font-family:'Nunito',sans-serif; font-weight:700;
+    cursor:pointer; text-decoration:none; text-align:center;
+    transition:background .25s ease, border-color .25s ease, transform .25s cubic-bezier(.34,1.56,.64,1), color .25s ease;
+  }
+  .btn-cancel:hover {
+    background:var(--surface-hov); border-color:var(--border-hov);
+    transform:translateY(-2px); color:var(--text);
+  }
+
+  .btn-update {
+    flex:2; padding:13px; border-radius:13px; border:none;
+    background:linear-gradient(135deg,#7c3aed,#0ea5e9);
+    color:#fff; font-size:14px; font-family:'Nunito',sans-serif; font-weight:800;
+    letter-spacing:.4px; cursor:pointer; position:relative; overflow:hidden;
+    transition:transform .25s cubic-bezier(.34,1.56,.64,1), box-shadow .3s ease;
+    box-shadow:0 6px 24px rgba(124,58,237,.38);
+  }
+  .btn-update:hover { transform:translateY(-3px) scale(1.01); box-shadow:0 14px 40px rgba(124,58,237,.5); }
+  .btn-update:active { transform:scale(.98); }
+  .btn-update::after {
+    content:''; position:absolute; top:0; left:-120%;
+    width:70%; height:100%;
+    background:linear-gradient(90deg,transparent,rgba(255,255,255,.18),transparent);
+    transform:skewX(-20deg); animation:shimmer 3.5s ease-in-out infinite;
+  }
+  @keyframes shimmer { 0%{left:-120%} 50%,100%{left:140%} }
+
+  @media (max-width:520px) {
+    .edit-card { padding:28px 20px 24px; border-radius:20px; }
+    .edit-header-icon { width:40px; height:40px; font-size:18px; }
+    .edit-header-text h2 { font-size:17px; }
+    .edit-actions { flex-direction:column; }
+    .btn-cancel,.btn-update { flex:unset; width:100%; }
+  }
+</style>
+
+<div class="edit-page">
+  <div class="edit-orb edit-orb-1"></div>
+  <div class="edit-orb edit-orb-2"></div>
+
+  <div class="edit-card">
+    <div class="edit-header">
+      
+      <div class="edit-header-text">
+        <h2>Edit Device</h2>
+        <p>Update device configuration below</p>
+      </div>
+    </div>
+
+    <div class="edit-divider"></div>
+
+    <form method="POST">
+      <div class="field-group">
+        <div class="field-item f-name">
+          <label class="field-label"><span class="field-label-dot"></span>Device Name</label>
+          <div class="field-input-wrap">
+            <span class="field-prefix"><i class="fi fi-sr-computer"></i></span>
+            <input type="text" name="device_name" value="{{ device.device_name }}" placeholder="e.g. Core Router 01" required>
+          </div>
+        </div>
+        <div class="field-item f-ip">
+          <label class="field-label"><span class="field-label-dot"></span>IP Address</label>
+          <div class="field-input-wrap">
+            <span class="field-prefix"><i class="fi fi-sr-globe"></i></span>
+            <input type="text" name="ip_address" value="{{ device.ip_address }}" placeholder="e.g. 192.168.1.1" required>
+          </div>
+        </div>
+        <div class="field-item f-type">
+          <label class="field-label"><span class="field-label-dot"></span>Device Type</label>
+          <div class="field-input-wrap">
+            <span class="field-prefix"><i class="fi fi-sr-wifi"></i></span>
+            <input type="text" name="device_type" value="{{ device.device_type }}" placeholder="e.g. Router, Switch, PC" required>
+          </div>
+        </div>
+        <div class="field-item f-loc">
+          <label class="field-label"><span class="field-label-dot"></span>Location<span class="optional-tag">Optional</span></label>
+          <div class="field-input-wrap">
+            <span class="field-prefix"><i class="fi fi-sr-map-marker"></i></span>
+            <input type="text" name="location" value="{{ device.location }}" placeholder="e.g. Server Room B">
+          </div>
+        </div>
+      </div>
+      <div class="edit-actions">
+        <a href="{{ url_for('devices') }}" class="btn-cancel">Cancel</a>
+        <button type="submit" class="btn-update">Update Device</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+  document.querySelectorAll('.field-item input').forEach(input => {
+    const icon = input.closest('.field-input-wrap').querySelector('.field-prefix');
+    input.addEventListener('focus', () => { icon.style.transform = 'translateY(-50%) scale(1.2) rotate(-8deg)'; });
+    input.addEventListener('blur',  () => { icon.style.transform = 'translateY(-50%) scale(1) rotate(0deg)'; });
+  });
+  document.querySelector('.btn-update').addEventListener('click', function(e) {
+    const ripple = document.createElement('span');
+    const rect = this.getBoundingClientRect(), size = Math.max(rect.width, rect.height);
+    Object.assign(ripple.style, { position:'absolute', width:size+'px', height:size+'px',
+      left:(e.clientX-rect.left-size/2)+'px', top:(e.clientY-rect.top-size/2)+'px',
+      background:'rgba(255,255,255,.22)', borderRadius:'50%',
+      transform:'scale(0)', transition:'transform .5s ease, opacity .5s ease', opacity:'1', pointerEvents:'none' });
+    this.appendChild(ripple);
+    requestAnimationFrame(()=>{ ripple.style.transform='scale(2.5)'; ripple.style.opacity='0'; });
+    setTimeout(()=>ripple.remove(), 550);
+  });
+</script>
+
+{% endblock %}
