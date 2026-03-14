@@ -31,7 +31,7 @@
   .wifi-header {
     display: flex; align-items: center; justify-content: space-between;
     flex-wrap: wrap; gap: 16px;
-    margin-bottom: 24px; padding: 22px 28px;
+    margin-bottom: 18px; padding: 22px 28px;
     background: var(--surface);
     backdrop-filter: blur(24px) saturate(180%);
     -webkit-backdrop-filter: blur(24px) saturate(180%);
@@ -56,6 +56,10 @@
   }
   .wifi-title-text p { font-size: 12px; color: var(--text-muted); font-weight: 500; }
 
+  .header-actions {
+    display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  }
+
   .live-badge {
     display: inline-flex; align-items: center; gap: 8px;
     padding: 8px 18px; border-radius: 50px;
@@ -64,7 +68,18 @@
     white-space: nowrap;
     transition: background 0.45s ease, color 0.45s ease;
   }
-  [data-theme="light"] .live-badge { background:rgba(2,132,199,0.08); border-color:rgba(2,132,199,0.22); }
+
+  .scan-btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 9px 18px; border-radius: 50px;
+    border: 1px solid rgba(14,165,233,0.25);
+    background: linear-gradient(135deg, #0ea5e9, #0284c7);
+    color: white; font-size: 12px; font-weight: 800;
+    cursor: pointer;
+    transition: transform .2s ease, opacity .2s ease;
+  }
+  .scan-btn:hover { transform: translateY(-1px); }
+  .scan-btn:disabled { opacity: .7; cursor: not-allowed; }
 
   .live-dot {
     width:7px; height:7px; border-radius:50%;
@@ -76,6 +91,18 @@
     0%  { box-shadow:0 0 0 0 rgba(56,189,248,0.7); }
     70% { box-shadow:0 0 0 8px rgba(56,189,248,0); }
     100%{ box-shadow:0 0 0 0 rgba(56,189,248,0); }
+  }
+
+  .scan-status {
+    position: relative; z-index: 10;
+    margin-bottom: 18px;
+    padding: 12px 16px;
+    border-radius: 14px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    font-size: 13px;
+    font-weight: 700;
   }
 
   .stats-grid {
@@ -167,7 +194,7 @@
   }
 
   .table-scroll { overflow-x: auto; }
-  table { width:100%; border-collapse:collapse; min-width: 1100px; }
+  table { width:100%; border-collapse:collapse; min-width: 1450px; }
 
   thead tr {
     background:var(--thead-bg, rgba(255,255,255,0.03));
@@ -180,12 +207,6 @@
     color:var(--text-muted); white-space:nowrap; text-align:left;
     border-bottom:1px solid var(--border);
   }
-
-  .device-row {
-    opacity:0; transform:translateX(-10px);
-    transition:opacity .4s ease, transform .4s cubic-bezier(.22,1,.36,1);
-  }
-  .device-row.visible { opacity:1; transform:translateX(0); }
 
   .device-row td {
     padding:14px 20px; font-size:13px; font-weight:600; color:var(--text);
@@ -224,14 +245,14 @@
     border:1px solid rgba(124,58,237,0.18); letter-spacing:0.5px;
   }
 
-  .vendor-badge, .type-badge, .model-badge, .host-badge {
+  .vendor-badge, .type-badge, .model-badge, .host-badge, .status-badge, .agent-badge {
     display:inline-flex; align-items:center; gap:7px;
     padding:5px 12px; border-radius:50px; font-size:12px; font-weight:700;
     white-space:nowrap; max-width:220px; overflow:hidden; text-overflow:ellipsis;
     border:1px solid transparent;
   }
 
-  .vendor-dot, .type-dot, .model-dot, .host-dot {
+  .vendor-dot, .type-dot, .model-dot, .host-dot, .status-dot, .agent-dot {
     width:6px; height:6px; border-radius:50%; flex-shrink:0;
   }
 
@@ -265,6 +286,9 @@
   .type-pc { background:rgba(129,140,248,0.12); color:var(--indigo); border-color:rgba(129,140,248,0.22); }
   .type-pc .type-dot { background:var(--indigo); }
 
+  .type-server { background:rgba(244,114,182,0.12); color:var(--pink); border-color:rgba(244,114,182,0.22); }
+  .type-server .type-dot { background:var(--pink); }
+
   .type-unknown { background:rgba(148,163,184,0.08); color:var(--text-muted); border-color:var(--border); }
   .type-unknown .type-dot { background:var(--text-muted); }
 
@@ -281,6 +305,34 @@
     border-color:rgba(124,58,237,0.18);
   }
   .model-badge .model-dot { background:var(--violet); }
+
+  .status-online {
+    background:rgba(52,211,153,0.10);
+    color:var(--green);
+    border-color:rgba(52,211,153,0.22);
+  }
+  .status-online .status-dot { background:var(--green); }
+
+  .status-offline {
+    background:rgba(248,113,113,0.10);
+    color:#f87171;
+    border-color:rgba(248,113,113,0.22);
+  }
+  .status-offline .status-dot { background:#f87171; }
+
+  .status-unknown {
+    background:rgba(148,163,184,0.08);
+    color:var(--text-muted);
+    border-color:var(--border);
+  }
+  .status-unknown .status-dot { background:var(--text-muted); }
+
+  .agent-badge {
+    background:rgba(14,165,233,0.08);
+    color:var(--sky);
+    border-color:rgba(14,165,233,0.18);
+  }
+  .agent-badge .agent-dot { background:var(--sky); }
 
   .copy-btn {
     display:inline-flex; align-items:center; justify-content:center;
@@ -314,14 +366,24 @@
     <div class="wifi-title">
       <div class="wifi-title-text">
         <h2>WiFi Connected Devices</h2>
-        <p>Live view of all devices on the network</p>
+        <p>Click Scan Now to detect devices in your local network</p>
       </div>
     </div>
-    <div class="live-badge">
-      <span class="live-dot"></span>
-      <span id="deviceCount">{{ devices | length }}</span> Connected
+
+    <div class="header-actions">
+      <div class="live-badge">
+        <span class="live-dot"></span>
+        <span id="deviceCount">0</span> Devices
+      </div>
+
+      <button id="scanBtn" class="scan-btn">
+        <i class="fi fi-sr-radar"></i>
+        Scan Now
+      </button>
     </div>
   </div>
+
+  <div class="scan-status" id="scanStatus">Ready to scan.</div>
 
   <div class="stats-grid">
     <div class="stat-card">
@@ -329,15 +391,25 @@
       <div class="stat-icon"><i class="fi fi-sr-wifi"></i></div>
       <div class="stat-info">
         <span class="stat-lbl">Total Devices</span>
-        <span class="stat-val sv-sky" id="statTotal">{{ devices | length }}</span>
+        <span class="stat-val sv-sky" id="statTotal">0</span>
       </div>
     </div>
+
     <div class="stat-card">
       <div class="stat-glow" style="--g:#34d399"></div>
       <div class="stat-icon"><i class="fi fi-sr-check-circle"></i></div>
       <div class="stat-info">
-        <span class="stat-lbl">Active Now</span>
-        <span class="stat-val sv-green" id="statActive">{{ devices | length }}</span>
+        <span class="stat-lbl">Online Devices</span>
+        <span class="stat-val sv-green" id="statActive">0</span>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-glow" style="--g:#fbbf24"></div>
+      <div class="stat-icon"><i class="fi fi-sr-building"></i></div>
+      <div class="stat-info">
+        <span class="stat-lbl">Known Vendors</span>
+        <span class="stat-val sv-amber" id="statVendors">0</span>
       </div>
     </div>
   </div>
@@ -350,7 +422,7 @@
       </div>
       <div class="search-wrap">
         <span class="search-icon"><i class="fi fi-sr-search"></i></span>
-        <input type="text" class="wifi-search" id="wifiSearch" placeholder="Search IP, MAC, vendor, hostname, type or model…">
+        <input type="text" class="wifi-search" id="wifiSearch" placeholder="Search IP, MAC, vendor, hostname, type, model, status or agent…">
       </div>
     </div>
 
@@ -361,175 +433,236 @@
             <th>#</th>
             <th>IP Address</th>
             <th>MAC Address</th>
-           
+            <th>Vendor</th>
             <th>Hostname</th>
             <th>Device Type</th>
             <th>Possible Model</th>
-            <th>System Device</th>
+            <th>Status</th>
+            <th>Agent</th>
+            <th>Copy</th>
           </tr>
         </thead>
         <tbody id="deviceTbody">
-          {% for device in devices %}
-          <tr class="device-row"
-              data-search="{{ device.ip }} {{ device.mac }} {{ device.vendor }} {{ device.hostname }} {{ device.device_type }} {{ device.possible_model }}">
-            <td><span class="row-num">{{ loop.index }}</span></td>
-
-            <td>
-              <div class="ip-chip">
-                <span class="ip-dot"></span>
-                <code class="ip-code">{{ device.ip }}</code>
-              </div>
-            </td>
-
-            <td>
-              <div class="mac-chip">
-                <span class="mac-icon"><i class="fi fi-sr-link"></i></span>
-                <code class="mac-code">{{ device.mac }}</code>
-              </div>
-            </td>
-
-            <td>
-              {% set v = device.vendor | lower %}
-              {% if 'apple' in v %}
-                <span class="vendor-badge vendor-apple"><span class="vendor-dot"></span>{{ device.vendor }}</span>
-              {% elif 'samsung' in v %}
-                <span class="vendor-badge vendor-samsung"><span class="vendor-dot"></span>{{ device.vendor }}</span>
-              {% elif 'intel' in v %}
-                <span class="vendor-badge vendor-intel"><span class="vendor-dot"></span>{{ device.vendor }}</span>
-              {% elif 'cisco' in v %}
-                <span class="vendor-badge vendor-cisco"><span class="vendor-dot"></span>{{ device.vendor }}</span>
-              {% elif 'tp-link' in v or 'tp link' in v %}
-                <span class="vendor-badge vendor-tp"><span class="vendor-dot"></span>{{ device.vendor }}</span>
-              {% elif device.vendor == '' or device.vendor == 'Unknown' %}
-                <span class="vendor-badge vendor-unknown"><span class="vendor-dot"></span>Unknown</span>
-              {% else %}
-                <span class="vendor-badge"><span class="vendor-dot"></span>{{ device.vendor }}</span>
-              {% endif %}
-            </td>
-
-            <td>
-              {% if device.hostname and device.hostname != 'Unknown' %}
-                <span class="host-badge"><span class="host-dot"></span>{{ device.hostname }}</span>
-              {% else %}
-                <span class="host-badge" style="opacity:.65;"><span class="host-dot"></span>Unknown</span>
-              {% endif %}
-            </td>
-
-            <td>
-              {% set t = device.device_type | lower %}
-              {% if 'iphone' in t or 'ipad' in t or 'android' in t %}
-                <span class="type-badge type-phone"><span class="type-dot"></span>{{ device.device_type }}</span>
-              {% elif 'router' in t or 'switch' in t or 'ap' in t %}
-                <span class="type-badge type-router"><span class="type-dot"></span>{{ device.device_type }}</span>
-              {% elif 'pc' in t or 'laptop' in t or 'mac' in t %}
-                <span class="type-badge type-pc"><span class="type-dot"></span>{{ device.device_type }}</span>
-              {% else %}
-                <span class="type-badge type-unknown"><span class="type-dot"></span>{{ device.device_type }}</span>
-              {% endif %}
-            </td>
-
-            <td>
-              {% if device.possible_model and device.possible_model != 'Unknown' %}
-                <span class="model-badge"><span class="model-dot"></span>{{ device.possible_model }}</span>
-              {% else %}
-                <span class="model-badge" style="opacity:.65;"><span class="model-dot"></span>Unknown</span>
-              {% endif %}
-            </td>
-
-            <td>
-              <button class="copy-btn" title="Copy row"
-                data-copy="{{ device.ip }} | {{ device.mac }} | {{ device.vendor }} | {{ device.hostname }} | {{ device.device_type }} | {{ device.possible_model }}"
-                onclick="copyEntry(this)">
-                <i class="fi fi-sr-copy"></i>
-              </button>
+          <tr id="emptyRow">
+            <td colspan="10" class="empty-state">
+              <div class="empty-icon"><i class="fi fi-sr-wifi"></i></div>
+              <p>No devices loaded yet</p>
+              <small>Click Scan Now to scan your local network</small>
             </td>
           </tr>
-          {% endfor %}
         </tbody>
       </table>
-
-      {% if not devices %}
-      <div class="empty-state">
-        <div class="empty-icon"><i class="fi fi-sr-wifi"></i></div>
-        <p>No devices found on the network</p>
-        <small>Devices will appear here once they connect to WiFi</small>
-      </div>
-      {% endif %}
     </div>
   </div>
 </div>
 
 <script>
-  document.querySelectorAll('.device-row').forEach((row, i) => {
-    setTimeout(() => row.classList.add('visible'), 100 + i * 50);
-  });
+  const scanBtn = document.getElementById('scanBtn');
+  const scanStatus = document.getElementById('scanStatus');
+  const tbody = document.getElementById('deviceTbody');
+  const searchInput = document.getElementById('wifiSearch');
+  const deviceCount = document.getElementById('deviceCount');
+  const statTotal = document.getElementById('statTotal');
+  const statActive = document.getElementById('statActive');
+  const statVendors = document.getElementById('statVendors');
 
-  (function countVendors() {
-    const vendors = new Set();
-    document.querySelectorAll('.device-row').forEach(row => {
-      const searchText = row.dataset.search || '';
-      const parts = searchText.split(' ');
-      const vendor = parts.slice(2, 5).join(' ').trim();
-      if (vendor && vendor.toLowerCase() !== 'unknown') vendors.add(vendor.toLowerCase());
+  let allDevices = [];
+
+  function escapeHtml(text) {
+    return String(text ?? '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
+  }
+
+  function getVendorBadge(vendor) {
+    const v = (vendor || 'Unknown').toLowerCase();
+    if (v.includes('apple')) {
+      return `<span class="vendor-badge vendor-apple"><span class="vendor-dot"></span>${escapeHtml(vendor || 'Unknown')}</span>`;
+    }
+    if (v.includes('samsung')) {
+      return `<span class="vendor-badge vendor-samsung"><span class="vendor-dot"></span>${escapeHtml(vendor || 'Unknown')}</span>`;
+    }
+    if (v.includes('intel')) {
+      return `<span class="vendor-badge vendor-intel"><span class="vendor-dot"></span>${escapeHtml(vendor || 'Unknown')}</span>`;
+    }
+    if (v.includes('cisco')) {
+      return `<span class="vendor-badge vendor-cisco"><span class="vendor-dot"></span>${escapeHtml(vendor || 'Unknown')}</span>`;
+    }
+    if (v.includes('tp-link') || v.includes('tp link') || v.includes('tplink')) {
+      return `<span class="vendor-badge vendor-tp"><span class="vendor-dot"></span>${escapeHtml(vendor || 'Unknown')}</span>`;
+    }
+    if (!vendor || vendor === 'Unknown') {
+      return `<span class="vendor-badge vendor-unknown"><span class="vendor-dot"></span>Unknown</span>`;
+    }
+    return `<span class="vendor-badge"><span class="vendor-dot"></span>${escapeHtml(vendor)}</span>`;
+  }
+
+  function getTypeBadge(deviceType) {
+    const t = (deviceType || 'Unknown').toLowerCase();
+    if (t.includes('phone') || t.includes('android') || t.includes('apple device')) {
+      return `<span class="type-badge type-phone"><span class="type-dot"></span>${escapeHtml(deviceType || 'Unknown')}</span>`;
+    }
+    if (t.includes('router') || t.includes('switch') || t.includes('ap')) {
+      return `<span class="type-badge type-router"><span class="type-dot"></span>${escapeHtml(deviceType || 'Unknown')}</span>`;
+    }
+    if (t.includes('pc') || t.includes('laptop') || t.includes('mac')) {
+      return `<span class="type-badge type-pc"><span class="type-dot"></span>${escapeHtml(deviceType || 'Unknown')}</span>`;
+    }
+    if (t.includes('server')) {
+      return `<span class="type-badge type-server"><span class="type-dot"></span>${escapeHtml(deviceType || 'Unknown')}</span>`;
+    }
+    return `<span class="type-badge type-unknown"><span class="type-dot"></span>${escapeHtml(deviceType || 'Unknown')}</span>`;
+  }
+
+  function getStatusBadge(status) {
+    const s = (status || 'Unknown').toLowerCase();
+    if (s === 'online') {
+      return `<span class="status-badge status-online"><span class="status-dot"></span>Online</span>`;
+    }
+    if (s === 'offline') {
+      return `<span class="status-badge status-offline"><span class="status-dot"></span>Offline</span>`;
+    }
+    return `<span class="status-badge status-unknown"><span class="status-dot"></span>Unknown</span>`;
+  }
+
+  function renderDevices(devices) {
+    const q = (searchInput.value || '').toLowerCase();
+    const filtered = devices.filter(device => {
+      const text = `${device.ip_address || ''} ${device.mac_address || ''} ${device.vendor || ''} ${device.hostname || ''} ${device.device_type || ''} ${device.possible_model || ''} ${device.status || ''} ${device.agent_name || ''}`.toLowerCase();
+      return text.includes(q);
     });
-    document.getElementById('statVendors').textContent = vendors.size || 0;
-  })();
 
-  ['statTotal', 'statActive', 'statVendors'].forEach(id => {
-    const el = document.getElementById(id);
-    if (!el) return;
-    const target = parseInt(el.textContent, 10) || 0;
-    el.textContent = '0';
-    const dur = 900, start = performance.now();
-    const tick = now => {
-      const p = Math.min((now - start) / dur, 1);
-      el.textContent = Math.round((1 - Math.pow(2, -10 * p)) * target);
-      if (p < 1) requestAnimationFrame(tick);
-    };
-    setTimeout(() => requestAnimationFrame(tick), 300);
-  });
+    tbody.innerHTML = '';
 
-  document.getElementById('wifiSearch').addEventListener('input', function () {
-    const q = this.value.toLowerCase();
-    let count = 0;
-    document.querySelectorAll('.device-row').forEach(row => {
-      const match = row.dataset.search.toLowerCase().includes(q);
-      row.style.display = match ? '' : 'none';
-      if (match) count++;
-    });
-    document.getElementById('deviceCount').textContent = count;
-  });
+    if (!filtered.length) {
+      tbody.innerHTML = `
+        <tr id="emptyRow">
+          <td colspan="10" class="empty-state">
+            <div class="empty-icon"><i class="fi fi-sr-wifi"></i></div>
+            <p>No matching devices found</p>
+            <small>Try another keyword or click Scan Now</small>
+          </td>
+        </tr>
+      `;
+    } else {
+      filtered.forEach((device, index) => {
+        const row = document.createElement('tr');
+        row.className = 'device-row';
+        row.innerHTML = `
+          <td><span class="row-num">${index + 1}</span></td>
+          <td>
+            <div class="ip-chip">
+              <span class="ip-dot"></span>
+              <code class="ip-code">${escapeHtml(device.ip_address || 'N/A')}</code>
+            </div>
+          </td>
+          <td>
+            <div class="mac-chip">
+              <span class="mac-icon"><i class="fi fi-sr-link"></i></span>
+              <code class="mac-code">${escapeHtml(device.mac_address || 'N/A')}</code>
+            </div>
+          </td>
+          <td>${getVendorBadge(device.vendor)}</td>
+          <td>
+            ${device.hostname && device.hostname !== 'Unknown'
+              ? `<span class="host-badge"><span class="host-dot"></span>${escapeHtml(device.hostname)}</span>`
+              : `<span class="host-badge" style="opacity:.65;"><span class="host-dot"></span>Unknown</span>`}
+          </td>
+          <td>${getTypeBadge(device.device_type)}</td>
+          <td>
+            ${device.possible_model && device.possible_model !== 'Unknown'
+              ? `<span class="model-badge"><span class="model-dot"></span>${escapeHtml(device.possible_model)}</span>`
+              : `<span class="model-badge" style="opacity:.65;"><span class="model-dot"></span>Unknown</span>`}
+          </td>
+          <td>${getStatusBadge(device.status)}</td>
+          <td>
+            <span class="agent-badge">
+              <span class="agent-dot"></span>${escapeHtml(device.agent_name || 'N/A')}
+            </span>
+          </td>
+          <td>
+            <button class="copy-btn" title="Copy row"
+              data-copy="${escapeHtml(device.ip_address || '')} | ${escapeHtml(device.mac_address || '')} | ${escapeHtml(device.vendor || '')} | ${escapeHtml(device.hostname || '')} | ${escapeHtml(device.device_type || '')} | ${escapeHtml(device.possible_model || '')} | ${escapeHtml(device.status || '')} | ${escapeHtml(device.agent_name || '')}">
+              <i class="fi fi-sr-copy"></i>
+            </button>
+          </td>
+        `;
+        tbody.appendChild(row);
+      });
+    }
 
-  function copyEntry(btn) {
-    navigator.clipboard.writeText(btn.dataset.copy).then(() => {
-      btn.innerHTML = '<i class="fi fi-sr-check" style="color:#34d399;"></i>';
-      btn.classList.add('copied');
-      setTimeout(() => {
-        btn.innerHTML = '<i class="fi fi-sr-copy"></i>';
-        btn.classList.remove('copied');
-      }, 1800);
-    }).catch(() => {
-      btn.innerHTML = '<i class="fi fi-sr-cross" style="color:#f87171;"></i>';
-      setTimeout(() => {
-        btn.innerHTML = '<i class="fi fi-sr-copy"></i>';
-      }, 1500);
+    const onlineCount = devices.filter(d => (d.status || '').toLowerCase() === 'online').length;
+    const vendors = new Set(
+      devices
+        .map(d => (d.vendor || '').trim().toLowerCase())
+        .filter(v => v && v !== 'unknown' && v !== 'n/a')
+    );
+
+    deviceCount.textContent = filtered.length;
+    statTotal.textContent = devices.length;
+    statActive.textContent = onlineCount;
+    statVendors.textContent = vendors.size;
+
+    document.querySelectorAll('.copy-btn').forEach(btn => {
+      btn.addEventListener('click', function () {
+        navigator.clipboard.writeText(this.dataset.copy).then(() => {
+          this.innerHTML = '<i class="fi fi-sr-check" style="color:#34d399;"></i>';
+          this.classList.add('copied');
+          setTimeout(() => {
+            this.innerHTML = '<i class="fi fi-sr-copy"></i>';
+            this.classList.remove('copied');
+          }, 1500);
+        });
+      });
     });
   }
 
-  document.querySelectorAll('.stat-card').forEach(card => {
-    card.addEventListener('mousemove', e => {
-      const r = card.getBoundingClientRect();
-      const x = (e.clientX - r.left) / r.width  - 0.5;
-      const y = (e.clientY - r.top)  / r.height - 0.5;
-      card.style.transform = `translateY(-4px) scale(1.01) rotateX(${-y * 7}deg) rotateY(${x * 7}deg)`;
-    });
-    card.addEventListener('mouseenter', () => {
-      card.style.transition = 'transform 0.1s ease, border-color .3s';
-    });
-    card.addEventListener('mouseleave', () => {
-      card.style.transform = '';
-      card.style.transition = 'transform 0.5s cubic-bezier(.34,1.56,.64,1), border-color .3s';
-    });
+  async function loadDevices() {
+    try {
+      const res = await fetch('/scan-wifi/data', { cache: 'no-store' });
+      const data = await res.json();
+      allDevices = Array.isArray(data) ? data : [];
+      renderDevices(allDevices);
+    } catch (err) {
+      scanStatus.textContent = 'Could not load devices: ' + err.message;
+    }
+  }
+
+  async function runScan() {
+    scanBtn.disabled = true;
+    scanBtn.innerHTML = '<i class="fi fi-sr-spinner"></i> Scanning...';
+    scanStatus.textContent = 'Scanning local network... please wait';
+
+    try {
+      const res = await fetch('/scan-wifi/run', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+      });
+      const data = await res.json();
+
+      if (data.success) {
+        scanStatus.textContent = data.message || 'Scan completed successfully.';
+        await loadDevices();
+      } else {
+        scanStatus.textContent = data.message || 'Scan failed.';
+      }
+    } catch (err) {
+      scanStatus.textContent = 'Scan failed: ' + err.message;
+    } finally {
+      scanBtn.disabled = false;
+      scanBtn.innerHTML = '<i class="fi fi-sr-radar"></i> Scan Now';
+    }
+  }
+
+  searchInput.addEventListener('input', () => renderDevices(allDevices));
+  scanBtn.addEventListener('click', runScan);
+
+  window.addEventListener('load', async () => {
+    await loadDevices();
+    setInterval(loadDevices, 10000);
   });
 </script>
 

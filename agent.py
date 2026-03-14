@@ -5,7 +5,7 @@ from scapy.all import ARP, Ether, srp
 API_URL = "https://clouddom-network-management.onrender.com/api/devices/update"
 API_TOKEN = "my-agent-secret"
 
-NETWORK = "192.168.1.0/24"
+NETWORK = "10.10.17.151"
 SCAN_INTERVAL = 3
 
 
